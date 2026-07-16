@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khách hàng — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Khách hàng / Đại lý</h1>
+        <p class="page-desc">Quản lý danh sách đại lý và khách hàng B2B</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-default" onclick="DTV.toast('Xuất Excel','Đang tải file...','info')">Xuất Excel</button>
+        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerCustomer')">+ Thêm đại lý</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filter-panel">
+        <div class="filter-item">
+          <label>Tìm kiếm</label>
+          <input class="form-control" id="searchInput" placeholder="Tên, SĐT, mã..." style="width:200px">
+        </div>
+        <div class="filter-item">
+          <label>Hạng</label>
+          <select class="form-control" id="filterTier">
+            <option value="">Tất cả</option>
+            <option value="VIP">VIP</option><option value="Gold">Vàng</option><option value="Silver">Bạc</option><option value="Bronze">Đồng</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Thành phố</label>
+          <select class="form-control" id="filterCity">
+            <option value="">Tất cả</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Trạng thái</label>
+          <select class="form-control" id="filterStatus">
+            <option value="">Tất cả</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Ngưng</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="renderTable()">Lọc</button>
+        <button class="btn btn-default" onclick="resetFilter()">Đặt lại</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Đại lý</th>
+              <th>Liên hệ</th>
+              <th>Thành phố</th>
+              <th>Hạng</th>
+              <th>Hạn mức</th>
+              <th>Công nợ</th>
+              <th>Đơn hàng</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="customerTable"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Drawer: Add Customer -->
+  <div class="drawer" id="drawerCustomer">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Thêm đại lý mới</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerCustomer')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Tên đại lý</label><input class="form-control" placeholder="VD: Tiệm Vàng Minh Châu"></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Người liên hệ</label><input class="form-control"></div>
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Số điện thoại</label><input class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-control" type="email"></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label">Thành phố</label><input class="form-control"></div>
+        <div class="form-group"><label class="form-label">Quận/Huyện</label><input class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Địa chỉ</label><input class="form-control"></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label">Hạng</label>
+          <select class="form-control"><option value="Bronze">Đồng</option><option value="Silver">Bạc</option><option value="Gold">Vàng</option><option value="VIP">VIP</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Hạn mức tín dụng</label><input class="form-control" type="number" placeholder="VND"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Ghi chú</label><textarea class="form-control" rows="3"></textarea></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerCustomer')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerCustomer');DTV.toast('Thành công','Đã thêm đại lý mới')">Lưu</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "customers", breadcrumb: [{ label: "Khách hàng" }], title: "Khách hàng" });
+
+    const cities = [...new Set(DTV.customers.map(c => c.city))];
+    document.getElementById("filterCity").innerHTML += cities.map(c => `<option>${c}</option>`).join("");
+
+    function getFiltered() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const tier = document.getElementById("filterTier").value;
+      const city = document.getElementById("filterCity").value;
+      const status = document.getElementById("filterStatus").value;
+      return DTV.customers.filter(c => {
+        if (q && !(c.name + c.phone + c.id + c.contact).toLowerCase().includes(q)) return false;
+        if (tier && c.tier !== tier) return false;
+        if (city && c.city !== city) return false;
+        if (status && c.status !== status) return false;
+        return true;
+      });
+    }
+
+    function renderTable() {
+      const data = getFiltered();
+      document.getElementById("customerTable").innerHTML = data.map(c => `
+        <tr>
+          <td class="cell-muted">${c.id}</td>
+          <td>
+            <div class="flex gap-8" style="align-items:center">
+              <div class="avatar">${DTV.initials(c.name)}</div>
+              <div>
+                <a href="customer-detail.html?id=${c.id}" class="fw-500" style="color:var(--text)">${c.name}</a>
+                <div class="cell-muted" style="font-size:12px">${c.email}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div>${c.contact}</div>
+            <div class="cell-muted" style="font-size:12px">${c.phone}</div>
+          </td>
+          <td>${c.city}</td>
+          <td>${DTV.tag(c.tier)}</td>
+          <td class="cell-money">${DTV.formatMoney(c.creditLimit)}</td>
+          <td class="cell-money ${c.debt > 0 ? "text-error" : ""}">${DTV.formatMoney(c.debt)}</td>
+          <td>${c.orders}</td>
+          <td>${DTV.tag(c.status)}</td>
+          <td class="actions">
+            <a class="btn btn-link btn-sm" href="customer-detail.html?id=${c.id}">Chi tiết</a>
+            <button class="btn btn-link btn-sm" onclick="DTV.openDrawer('drawerCustomer')">Sửa</button>
+          </td>
+        </tr>`).join("");
+      DTV.renderPagination("pagination", data.length);
+    }
+
+    function resetFilter() {
+      searchInput.value = ""; filterTier.value = ""; filterCity.value = ""; filterStatus.value = "";
+      renderTable();
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+    renderTable();
+  </script>
+</body>
+</html>

@@ -1,0 +1,354 @@
+/* Đô Thị Vàng — Mock Data (Vietnamese jewelry wholesale) */
+window.DTV = window.DTV || {};
+
+DTV.formatMoney = (n) => {
+  if (n == null) return "—";
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(n);
+};
+
+DTV.formatNumber = (n) => new Intl.NumberFormat("vi-VN").format(n);
+
+DTV.formatDate = (d) => {
+  const date = typeof d === "string" ? new Date(d) : d;
+  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+
+DTV.formatDateTime = (d) => {
+  const date = typeof d === "string" ? new Date(d) : d;
+  return date.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+};
+
+DTV.initials = (name) => name.split(" ").slice(-2).map(w => w[0]).join("").toUpperCase();
+
+/* ---------- Gold Price ---------- */
+DTV.goldPrice = {
+  current: { buy: 8950000, sell: 9100000, updatedAt: "2026-07-16T08:30:00" },
+  history: [
+    { date: "2026-07-16", buy: 8950000, sell: 9100000 },
+    { date: "2026-07-15", buy: 8920000, sell: 9070000 },
+    { date: "2026-07-14", buy: 8880000, sell: 9030000 },
+    { date: "2026-07-13", buy: 8910000, sell: 9060000 },
+    { date: "2026-07-12", buy: 8850000, sell: 9000000 },
+    { date: "2026-07-11", buy: 8800000, sell: 8950000 },
+    { date: "2026-07-10", buy: 8780000, sell: 8930000 },
+    { date: "2026-07-09", buy: 8820000, sell: 8970000 },
+    { date: "2026-07-08", buy: 8750000, sell: 8900000 },
+    { date: "2026-07-07", buy: 8700000, sell: 8850000 },
+    { date: "2026-07-06", buy: 8720000, sell: 8870000 },
+    { date: "2026-07-05", buy: 8680000, sell: 8830000 },
+    { date: "2026-07-04", buy: 8650000, sell: 8800000 },
+    { date: "2026-07-03", buy: 8600000, sell: 8750000 },
+  ],
+};
+
+/* ---------- Customers / Dealers ---------- */
+DTV.customers = [
+  { id: "KH001", name: "Tiệm Vàng Minh Châu", contact: "Nguyễn Văn Minh", phone: "0901234567", email: "minhchau@email.vn", city: "Hà Nội", district: "Hoàn Kiếm", address: "45 Hàng Bạc", tier: "VIP", creditLimit: 5000000000, debt: 1250000000, status: "active", orders: 156, totalSpent: 28500000000, joined: "2022-03-15" },
+  { id: "KH002", name: "Vàng Bạc Phú Quý", contact: "Trần Thị Hoa", phone: "0912345678", email: "phuquy@email.vn", city: "TP. Hồ Chí Minh", district: "Quận 5", address: "128 Nguyễn Trãi", tier: "Gold", creditLimit: 3000000000, debt: 450000000, status: "active", orders: 98, totalSpent: 15200000000, joined: "2022-06-20" },
+  { id: "KH003", name: "Đại lý Kim Long", contact: "Lê Văn Long", phone: "0923456789", email: "kimlong@email.vn", city: "Đà Nẵng", district: "Hải Châu", address: "22 Trần Phú", tier: "Silver", creditLimit: 1500000000, debt: 320000000, status: "active", orders: 67, totalSpent: 8900000000, joined: "2023-01-10" },
+  { id: "KH004", name: "Cửa hàng Ánh Dương", contact: "Phạm Thị Lan", phone: "0934567890", email: "anhduong@email.vn", city: "Hải Phòng", district: "Ngô Quyền", address: "88 Lạch Tray", tier: "Gold", creditLimit: 2000000000, debt: 0, status: "active", orders: 45, totalSpent: 6200000000, joined: "2023-04-05" },
+  { id: "KH005", name: "Chành sỉ Hoàng Gia", contact: "Hoàng Văn Đức", phone: "0945678901", email: "hoanggia@email.vn", city: "Cần Thơ", district: "Ninh Kiều", address: "15 Mậu Thân", tier: "VIP", creditLimit: 4000000000, debt: 2100000000, status: "active", orders: 134, totalSpent: 22100000000, joined: "2022-01-08" },
+  { id: "KH006", name: "Tiệm Vàng Thanh Hà", contact: "Vũ Thị Thanh", phone: "0956789012", email: "thanhha@email.vn", city: "Huế", district: "Phú Nhuận", address: "67 Hùng Vương", tier: "Silver", creditLimit: 1000000000, debt: 180000000, status: "active", orders: 38, totalSpent: 4100000000, joined: "2023-08-12" },
+  { id: "KH007", name: "Vàng Bạc Tân Phát", contact: "Đặng Văn Phát", phone: "0967890123", email: "tanphat@email.vn", city: "Nha Trang", district: "Lộc Thọ", address: "34 Trần Hưng Đạo", tier: "Bronze", creditLimit: 500000000, debt: 95000000, status: "active", orders: 22, totalSpent: 1800000000, joined: "2024-02-28" },
+  { id: "KH008", name: "Đại lý Ngọc Bích", contact: "Bùi Thị Ngọc", phone: "0978901234", email: "ngocbich@email.vn", city: "Hà Nội", district: "Cầu Giấy", address: "102 Xuân Thủy", tier: "Gold", creditLimit: 2500000000, debt: 780000000, status: "active", orders: 72, totalSpent: 11500000000, joined: "2022-11-15" },
+  { id: "KH009", name: "Tiệm Vàng Đại Phát", contact: "Ngô Văn Đại", phone: "0989012345", email: "daiphat@email.vn", city: "TP. Hồ Chí Minh", district: "Bình Thạnh", address: "56 Xô Viết Nghệ Tĩnh", tier: "Silver", creditLimit: 1200000000, debt: 0, status: "inactive", orders: 15, totalSpent: 2100000000, joined: "2024-05-01" },
+  { id: "KH010", name: "Chành sỉ Kim Cương", contact: "Lý Thị Kim", phone: "0990123456", email: "kimcuong@email.vn", city: "Bình Dương", district: "Thủ Dầu Một", address: "78 Đại lộ Bình Dương", tier: "VIP", creditLimit: 6000000000, debt: 3500000000, status: "active", orders: 189, totalSpent: 41200000000, joined: "2021-09-20" },
+  { id: "KH011", name: "Vàng Bạc Hạnh Phúc", contact: "Trương Văn Hạnh", phone: "0901122334", email: "hanhphuc@email.vn", city: "Vũng Tàu", district: "Thắng Tam", address: "23 Trương Công Định", tier: "Bronze", creditLimit: 400000000, debt: 120000000, status: "active", orders: 18, totalSpent: 1500000000, joined: "2024-08-15" },
+  { id: "KH012", name: "Đại lý Phú An", contact: "Đinh Thị An", phone: "0912233445", email: "phuan@email.vn", city: "Biên Hòa", district: "Tam Hiệp", address: "145 Phạm Văn Thuận", tier: "Gold", creditLimit: 2800000000, debt: 560000000, status: "active", orders: 81, totalSpent: 13800000000, joined: "2023-02-14" },
+];
+
+/* ---------- Categories ---------- */
+DTV.categories = [
+  { id: "DM001", name: "Nhẫn", slug: "nhan", products: 245, status: "active", parent: null },
+  { id: "DM002", name: "Nhẫn cưới", slug: "nhan-cuoi", products: 89, status: "active", parent: "DM001" },
+  { id: "DM003", name: "Nhẫn kim cương", slug: "nhan-kim-cuong", products: 56, status: "active", parent: "DM001" },
+  { id: "DM004", name: "Dây chuyền", slug: "day-chuyen", products: 178, status: "active", parent: null },
+  { id: "DM005", name: "Lắc tay", slug: "lac-tay", products: 134, status: "active", parent: null },
+  { id: "DM006", name: "Bông tai", slug: "bong-tai", products: 156, status: "active", parent: null },
+  { id: "DM007", name: "Vòng cổ", slug: "vong-co", products: 67, status: "active", parent: null },
+  { id: "DM008", name: "Charm trang sức", slug: "charm", products: 92, status: "active", parent: null },
+  { id: "DM009", name: "Trang sức cưới", slug: "trang-suc-cuoi", products: 45, status: "active", parent: null },
+  { id: "DM010", name: "Vàng miếng", slug: "vang-mieng", products: 12, status: "active", parent: null },
+];
+
+/* ---------- Collections ---------- */
+DTV.collections = [
+  { id: "BST001", name: "Xuân Hạnh Phúc 2026", products: 48, status: "active", featured: true, startDate: "2026-01-01", endDate: "2026-03-31" },
+  { id: "BST002", name: "Kim Bảo Phú Quý", products: 36, status: "active", featured: true, startDate: "2025-10-01", endDate: "2026-12-31" },
+  { id: "BST003", name: "Ánh Trăng Vàng", products: 28, status: "active", featured: false, startDate: "2026-04-01", endDate: "2026-06-30" },
+  { id: "BST004", name: "Cưới Hỏi Hoàng Gia", products: 52, status: "active", featured: true, startDate: "2025-01-01", endDate: "2026-12-31" },
+  { id: "BST005", name: "Vàng Tối Giản", products: 41, status: "draft", featured: false, startDate: "2026-07-01", endDate: "2026-09-30" },
+  { id: "BST006", name: "Tết Ất Tỵ 2025", products: 64, status: "archived", featured: false, startDate: "2025-01-01", endDate: "2025-02-28" },
+];
+
+/* ---------- Products ---------- */
+DTV.products = [
+  { id: "SP001", sku: "NC-24K-001", name: "Nhẫn cưới Trầu Cau", category: "Nhẫn cưới", collection: "Cưới Hỏi Hoàng Gia", goldType: "24K", goldColor: "Vàng", weight: 1.2, stone: "Không", size: "14-18", price: 12500000, stock: 45, reserved: 8, status: "active", sold: 234 },
+  { id: "SP002", sku: "NC-18K-002", name: "Nhẫn cưới Đôi Tim", category: "Nhẫn cưới", collection: "Cưới Hỏi Hoàng Gia", goldType: "18K", goldColor: "Vàng trắng", weight: 0.8, stone: "Kim cương 0.1ct", size: "12-20", price: 18900000, stock: 22, reserved: 5, status: "active", sold: 156 },
+  { id: "SP003", sku: "DC-24K-003", name: "Dây chuyền Rồng Phượng", category: "Dây chuyền", collection: "Kim Bảo Phú Quý", goldType: "24K", goldColor: "Vàng", weight: 3.5, stone: "Không", size: "45cm", price: 35000000, stock: 18, reserved: 3, status: "active", sold: 89 },
+  { id: "SP004", sku: "LT-18K-004", name: "Lắc tay Hoa Mai", category: "Lắc tay", collection: "Xuân Hạnh Phúc 2026", goldType: "18K", goldColor: "Vàng", weight: 2.1, stone: "Ngọc trai", size: "16-18cm", price: 22500000, stock: 31, reserved: 2, status: "active", sold: 112 },
+  { id: "SP005", sku: "BT-18K-005", name: "Bông tai Hoa Sen", category: "Bông tai", collection: "Ánh Trăng Vàng", goldType: "18K", goldColor: "Vàng hồng", weight: 1.5, stone: "Ruby", size: "—", price: 16800000, stock: 27, reserved: 4, status: "active", sold: 78 },
+  { id: "SP006", sku: "NK-18K-006", name: "Nhẫn kim cương đơn đá", category: "Nhẫn kim cương", collection: "Vàng Tối Giản", goldType: "18K", goldColor: "Vàng trắng", weight: 2.8, stone: "Kim cương 0.5ct", size: "10-18", price: 85000000, stock: 8, reserved: 2, status: "active", sold: 34 },
+  { id: "SP007", sku: "VC-24K-007", name: "Vòng cổ Cát Tường", category: "Vòng cổ", collection: "Kim Bảo Phú Quý", goldType: "24K", goldColor: "Vàng", weight: 5.2, stone: "Không", size: "50cm", price: 52000000, stock: 12, reserved: 1, status: "active", sold: 45 },
+  { id: "SP008", sku: "CM-18K-008", name: "Charm chữ Phúc", category: "Charm trang sức", collection: "Xuân Hạnh Phúc 2026", goldType: "18K", goldColor: "Vàng", weight: 0.5, stone: "Không", size: "—", price: 5800000, stock: 120, reserved: 15, status: "active", sold: 456 },
+  { id: "SP009", sku: "NC-24K-009", name: "Nhẫn cưới Song Hỷ", category: "Nhẫn cưới", collection: "Cưới Hỏi Hoàng Gia", goldType: "24K", goldColor: "Vàng", weight: 1.5, stone: "Không", size: "14-18", price: 15500000, stock: 38, reserved: 6, status: "active", sold: 198 },
+  { id: "SP010", sku: "DC-18K-010", name: "Dây chuyền Mặt Trời", category: "Dây chuyền", collection: "Ánh Trăng Vàng", goldType: "18K", goldColor: "Vàng", weight: 2.3, stone: "Sapphire", size: "42cm", price: 28900000, stock: 15, reserved: 0, status: "active", sold: 67 },
+  { id: "SP011", sku: "LT-24K-011", name: "Lắc tay Lộc Phát", category: "Lắc tay", collection: "Kim Bảo Phú Quý", goldType: "24K", goldColor: "Vàng", weight: 4.0, stone: "Không", size: "18-20cm", price: 42000000, stock: 9, reserved: 3, status: "low_stock", sold: 56 },
+  { id: "SP012", sku: "BT-24K-012", name: "Bông tai Đóa Hồng", category: "Bông tai", collection: "Xuân Hạnh Phúc 2026", goldType: "24K", goldColor: "Vàng", weight: 1.8, stone: "Không", size: "—", price: 18500000, stock: 0, reserved: 0, status: "out_of_stock", sold: 145 },
+  { id: "SP013", sku: "VM-999-013", name: "Vàng miếng SJC 1 chỉ", category: "Vàng miếng", collection: "—", goldType: "999.9", goldColor: "Vàng", weight: 3.75, stone: "—", size: "—", price: 34125000, stock: 50, reserved: 10, status: "active", sold: 890 },
+  { id: "SP014", sku: "NK-18K-014", name: "Nhẫn kim cương quầng đá", category: "Nhẫn kim cương", collection: "Vàng Tối Giản", goldType: "18K", goldColor: "Vàng trắng", weight: 3.2, stone: "Kim cương 0.3ct", size: "10-18", price: 62000000, stock: 6, reserved: 1, status: "active", sold: 28 },
+  { id: "SP015", sku: "TS-24K-015", name: "Bộ trang sức cưới 5 món", category: "Trang sức cưới", collection: "Cưới Hỏi Hoàng Gia", goldType: "24K", goldColor: "Vàng", weight: 12.5, stone: "Không", size: "Bộ", price: 128000000, stock: 5, reserved: 2, status: "active", sold: 19 },
+];
+
+/* ---------- Orders ---------- */
+DTV.orders = [
+  { id: "DH-2026-0847", customerId: "KH001", customer: "Tiệm Vàng Minh Châu", items: 5, total: 87500000, paid: 40000000, debt: 47500000, status: "producing", payment: "partial", production: "in_progress", shipment: "pending", createdAt: "2026-07-15T09:20:00", approvedAt: "2026-07-15T10:00:00" },
+  { id: "DH-2026-0846", customerId: "KH010", customer: "Chành sỉ Kim Cương", items: 12, total: 245000000, paid: 245000000, debt: 0, status: "shipping", payment: "paid", production: "completed", shipment: "in_transit", createdAt: "2026-07-14T14:30:00", approvedAt: "2026-07-14T15:00:00" },
+  { id: "DH-2026-0845", customerId: "KH002", customer: "Vàng Bạc Phú Quý", items: 3, total: 45600000, paid: 0, debt: 45600000, status: "pending", payment: "unpaid", production: "waiting", shipment: "pending", createdAt: "2026-07-16T08:15:00", approvedAt: null },
+  { id: "DH-2026-0844", customerId: "KH005", customer: "Chành sỉ Hoàng Gia", items: 8, total: 156000000, paid: 80000000, debt: 76000000, status: "producing", payment: "partial", production: "in_progress", shipment: "pending", createdAt: "2026-07-13T11:00:00", approvedAt: "2026-07-13T11:30:00" },
+  { id: "DH-2026-0843", customerId: "KH008", customer: "Đại lý Ngọc Bích", items: 4, total: 67800000, paid: 67800000, debt: 0, status: "completed", payment: "paid", production: "completed", shipment: "delivered", createdAt: "2026-07-10T16:45:00", approvedAt: "2026-07-10T17:00:00" },
+  { id: "DH-2026-0842", customerId: "KH003", customer: "Đại lý Kim Long", items: 2, total: 28900000, paid: 28900000, debt: 0, status: "shipping", payment: "paid", production: "completed", shipment: "packing", createdAt: "2026-07-12T10:20:00", approvedAt: "2026-07-12T10:45:00" },
+  { id: "DH-2026-0841", customerId: "KH012", customer: "Đại lý Phú An", items: 6, total: 98000000, paid: 50000000, debt: 48000000, status: "producing", payment: "partial", production: "in_progress", shipment: "pending", createdAt: "2026-07-11T09:00:00", approvedAt: "2026-07-11T09:30:00" },
+  { id: "DH-2026-0840", customerId: "KH004", customer: "Cửa hàng Ánh Dương", items: 1, total: 85000000, paid: 85000000, debt: 0, status: "completed", payment: "paid", production: "completed", shipment: "delivered", createdAt: "2026-07-08T13:15:00", approvedAt: "2026-07-08T14:00:00" },
+  { id: "DH-2026-0839", customerId: "KH006", customer: "Tiệm Vàng Thanh Hà", items: 3, total: 34500000, paid: 0, debt: 34500000, status: "pending", payment: "unpaid", production: "waiting", shipment: "pending", createdAt: "2026-07-16T07:50:00", approvedAt: null },
+  { id: "DH-2026-0838", customerId: "KH001", customer: "Tiệm Vàng Minh Châu", items: 7, total: 112000000, paid: 112000000, debt: 0, status: "completed", payment: "paid", production: "completed", shipment: "delivered", createdAt: "2026-07-05T10:30:00", approvedAt: "2026-07-05T11:00:00" },
+  { id: "DH-2026-0837", customerId: "KH007", customer: "Vàng Bạc Tân Phát", items: 2, total: 18300000, paid: 18300000, debt: 0, status: "cancelled", payment: "refunded", production: "cancelled", shipment: "cancelled", createdAt: "2026-07-09T15:20:00", approvedAt: "2026-07-09T15:40:00" },
+  { id: "DH-2026-0836", customerId: "KH010", customer: "Chành sỉ Kim Cương", items: 15, total: 320000000, paid: 200000000, debt: 120000000, status: "producing", payment: "partial", production: "in_progress", shipment: "pending", createdAt: "2026-07-07T08:00:00", approvedAt: "2026-07-07T08:30:00" },
+];
+
+DTV.orderItems = {
+  "DH-2026-0847": [
+    { productId: "SP001", name: "Nhẫn cưới Trầu Cau", sku: "NC-24K-001", qty: 10, weight: 1.2, unitPrice: 12500000, total: 125000000 },
+    { productId: "SP008", name: "Charm chữ Phúc", sku: "CM-18K-008", qty: 20, weight: 0.5, unitPrice: 5800000, total: 116000000 },
+    { productId: "SP004", name: "Lắc tay Hoa Mai", sku: "LT-18K-004", qty: 5, weight: 2.1, unitPrice: 22500000, total: 112500000 },
+  ],
+};
+
+/* ---------- Production ---------- */
+DTV.production = [
+  { id: "SX-0847", orderId: "DH-2026-0847", customer: "Tiệm Vàng Minh Châu", product: "Nhẫn cưới Trầu Cau ×10", stage: "crafting", assignee: "Thợ Nguyễn Văn A", progress: 65, eta: "2026-07-20", priority: "high", factory: "Xưởng 1" },
+  { id: "SX-0847b", orderId: "DH-2026-0847", customer: "Tiệm Vàng Minh Châu", product: "Charm chữ Phúc ×20", stage: "polishing", assignee: "Thợ Trần Thị B", progress: 85, eta: "2026-07-18", priority: "normal", factory: "Xưởng 1" },
+  { id: "SX-0844", orderId: "DH-2026-0844", customer: "Chành sỉ Hoàng Gia", product: "Dây chuyền Rồng Phượng ×3", stage: "casting", assignee: "Thợ Lê Văn C", progress: 30, eta: "2026-07-22", priority: "high", factory: "Xưởng 2" },
+  { id: "SX-0844b", orderId: "DH-2026-0844", customer: "Chành sỉ Hoàng Gia", product: "Vòng cổ Cát Tường ×2", stage: "queue", assignee: "—", progress: 0, eta: "2026-07-25", priority: "normal", factory: "Xưởng 2" },
+  { id: "SX-0841", orderId: "DH-2026-0841", customer: "Đại lý Phú An", product: "Nhẫn kim cương đơn đá ×1", stage: "setting", assignee: "Thợ Phạm Văn D", progress: 70, eta: "2026-07-19", priority: "urgent", factory: "Xưởng 1" },
+  { id: "SX-0841b", orderId: "DH-2026-0841", customer: "Đại lý Phú An", product: "Bông tai Hoa Sen ×4", stage: "crafting", assignee: "Thợ Hoàng Thị E", progress: 45, eta: "2026-07-21", priority: "normal", factory: "Xưởng 2" },
+  { id: "SX-0836", orderId: "DH-2026-0836", customer: "Chành sỉ Kim Cương", product: "Bộ trang sức cưới 5 món ×2", stage: "qc", assignee: "QC Vũ Văn F", progress: 95, eta: "2026-07-17", priority: "urgent", factory: "Xưởng 1" },
+  { id: "SX-0836b", orderId: "DH-2026-0836", customer: "Chành sỉ Kim Cương", product: "Lắc tay Lộc Phát ×5", stage: "crafting", assignee: "Thợ Đặng Văn G", progress: 55, eta: "2026-07-20", priority: "high", factory: "Xưởng 2" },
+];
+
+/* ---------- Inventory ---------- */
+DTV.inventory = DTV.products.map(p => ({
+  id: p.id,
+  sku: p.sku,
+  name: p.name,
+  warehouse: p.goldType === "24K" || p.goldType === "999.9" ? "Kho Vàng 24K" : "Kho Vàng 18K",
+  stock: p.stock,
+  reserved: p.reserved,
+  available: p.stock - p.reserved,
+  unit: "cái",
+  weight: p.weight,
+  status: p.status,
+  lastIn: "2026-07-10",
+  lastOut: "2026-07-15",
+}));
+
+DTV.stockHistory = [
+  { id: "NK001", type: "in", product: "Nhẫn cưới Trầu Cau", qty: 20, warehouse: "Kho Vàng 24K", by: "Nguyễn Kho", date: "2026-07-10T09:00:00", note: "Nhập từ sản xuất" },
+  { id: "XK001", type: "out", product: "Charm chữ Phúc", qty: 15, warehouse: "Kho Vàng 18K", by: "Trần Xuất", date: "2026-07-15T14:00:00", note: "Xuất đơn DH-2026-0847" },
+  { id: "NK002", type: "in", product: "Vàng miếng SJC 1 chỉ", qty: 30, warehouse: "Kho Vàng 24K", by: "Nguyễn Kho", date: "2026-07-12T10:30:00", note: "Nhập từ SJC" },
+  { id: "XK002", type: "out", product: "Dây chuyền Rồng Phượng", qty: 3, warehouse: "Kho Vàng 24K", by: "Lê Xuất", date: "2026-07-14T11:00:00", note: "Xuất đơn DH-2026-0846" },
+  { id: "NK003", type: "in", product: "Bông tai Hoa Sen", qty: 10, warehouse: "Kho Vàng 18K", by: "Nguyễn Kho", date: "2026-07-08T08:00:00", note: "Nhập từ sản xuất" },
+  { id: "XK003", type: "out", product: "Nhẫn kim cương đơn đá", qty: 1, warehouse: "Kho Vàng 18K", by: "Phạm Xuất", date: "2026-07-08T15:00:00", note: "Xuất đơn DH-2026-0840" },
+];
+
+/* ---------- Pricing ---------- */
+DTV.laborPrices = [
+  { id: "GC001", category: "Nhẫn trơn", goldType: "24K", laborPerChi: 350000, status: "active", effective: "2026-01-01" },
+  { id: "GC002", category: "Nhẫn trơn", goldType: "18K", laborPerChi: 450000, status: "active", effective: "2026-01-01" },
+  { id: "GC003", category: "Nhẫn đính đá", goldType: "18K", laborPerChi: 800000, status: "active", effective: "2026-01-01" },
+  { id: "GC004", category: "Dây chuyền", goldType: "24K", laborPerChi: 400000, status: "active", effective: "2026-01-01" },
+  { id: "GC005", category: "Dây chuyền", goldType: "18K", laborPerChi: 550000, status: "active", effective: "2026-01-01" },
+  { id: "GC006", category: "Lắc tay", goldType: "24K", laborPerChi: 380000, status: "active", effective: "2026-01-01" },
+  { id: "GC007", category: "Bông tai", goldType: "18K", laborPerChi: 600000, status: "active", effective: "2026-01-01" },
+  { id: "GC008", category: "Charm trang sức", goldType: "18K", laborPerChi: 500000, status: "active", effective: "2026-01-01" },
+];
+
+DTV.tierPrices = [
+  { tier: "VIP", discount: 8, laborDiscount: 10, minOrder: 50000000 },
+  { tier: "Gold", discount: 5, laborDiscount: 7, minOrder: 20000000 },
+  { tier: "Silver", discount: 3, laborDiscount: 5, minOrder: 10000000 },
+  { tier: "Bronze", discount: 0, laborDiscount: 0, minOrder: 5000000 },
+];
+
+/* ---------- Debt & Payments ---------- */
+DTV.debts = DTV.customers.filter(c => c.debt > 0).map(c => ({
+  customerId: c.id,
+  customer: c.name,
+  tier: c.tier,
+  totalDebt: c.debt,
+  overdue: Math.round(c.debt * 0.3),
+  current: Math.round(c.debt * 0.7),
+  aging30: Math.round(c.debt * 0.4),
+  aging60: Math.round(c.debt * 0.2),
+  aging90: Math.round(c.debt * 0.1),
+  lastPayment: "2026-07-01",
+  creditLimit: c.creditLimit,
+}));
+
+DTV.payments = [
+  { id: "TT-2026-0456", customer: "Tiệm Vàng Minh Châu", amount: 500000000, method: "Chuyển khoản", bank: "Vietcombank", orderId: "DH-2026-0838", date: "2026-07-05T10:00:00", status: "confirmed", by: "Kế toán Lan" },
+  { id: "TT-2026-0455", customer: "Chành sỉ Kim Cương", amount: 200000000, method: "Chuyển khoản", bank: "Techcombank", orderId: "DH-2026-0836", date: "2026-07-07T14:00:00", status: "confirmed", by: "Kế toán Lan" },
+  { id: "TT-2026-0454", customer: "Vàng Bạc Phú Quý", amount: 150000000, method: "Tiền mặt", bank: "—", orderId: "DH-2026-0835", date: "2026-07-04T09:30:00", status: "confirmed", by: "Kế toán Hùng" },
+  { id: "TT-2026-0453", customer: "Đại lý Ngọc Bích", amount: 67800000, method: "Chuyển khoản", bank: "MB Bank", orderId: "DH-2026-0843", date: "2026-07-10T16:00:00", status: "confirmed", by: "Kế toán Lan" },
+  { id: "TT-2026-0452", customer: "Chành sỉ Hoàng Gia", amount: 80000000, method: "Chuyển khoản", bank: "VietinBank", orderId: "DH-2026-0844", date: "2026-07-13T11:00:00", status: "confirmed", by: "Kế toán Hùng" },
+  { id: "TT-2026-0451", customer: "Cửa hàng Ánh Dương", amount: 85000000, method: "Chuyển khoản", bank: "BIDV", orderId: "DH-2026-0840", date: "2026-07-08T14:00:00", status: "confirmed", by: "Kế toán Lan" },
+  { id: "TT-2026-0450", customer: "Đại lý Phú An", amount: 50000000, method: "Chuyển khoản", bank: "VPBank", orderId: "DH-2026-0841", date: "2026-07-11T09:00:00", status: "pending", by: "Kế toán Hùng" },
+  { id: "TT-2026-0449", customer: "Tiệm Vàng Minh Châu", amount: 40000000, method: "Chuyển khoản", bank: "Vietcombank", orderId: "DH-2026-0847", date: "2026-07-15T09:30:00", status: "confirmed", by: "Kế toán Lan" },
+];
+
+/* ---------- News & CMS ---------- */
+DTV.news = [
+  { id: "TT001", title: "Điều chỉnh giá vàng ngày 16/07/2026", category: "Giá vàng", status: "published", author: "Tiếp thị", publishedAt: "2026-07-16T08:00:00", views: 234 },
+  { id: "TT002", title: "Ra mắt bộ sưu tập Vàng Tối Giản", category: "Sản phẩm", status: "published", author: "Tiếp thị", publishedAt: "2026-07-10T10:00:00", views: 567 },
+  { id: "TT003", title: "Chương trình ưu đãi đại lý VIP tháng 7", category: "Khuyến mãi", status: "published", author: "Kinh doanh", publishedAt: "2026-07-01T09:00:00", views: 891 },
+  { id: "TT004", title: "Hướng dẫn đặt hàng qua cổng đại lý", category: "Hướng dẫn", status: "draft", author: "CSKH", publishedAt: null, views: 0 },
+  { id: "TT005", title: "Thông báo nghỉ lễ Quốc khánh 2/9", category: "Thông báo", status: "scheduled", author: "Quản trị", publishedAt: "2026-08-25T08:00:00", views: 0 },
+];
+
+DTV.banners = [
+  { id: "BN001", title: "Xuân Hạnh Phúc 2026", position: "Hero trang chủ", status: "active", order: 1, startDate: "2026-01-01", endDate: "2026-03-31" },
+  { id: "BN002", title: "Ưu đãi VIP tháng 7", position: "Phụ trang chủ", status: "active", order: 2, startDate: "2026-07-01", endDate: "2026-07-31" },
+  { id: "BN003", title: "Cưới Hỏi Hoàng Gia", position: "Banner bộ sưu tập", status: "active", order: 3, startDate: "2025-01-01", endDate: "2026-12-31" },
+  { id: "BN004", title: "Sắp ra mắt Vàng Tối Giản", position: "Hero trang chủ", status: "draft", order: 4, startDate: "2026-07-01", endDate: "2026-09-30" },
+];
+
+DTV.promotions = [
+  { id: "KM001", name: "Giảm 5% đơn từ 50 triệu", type: "discount", status: "active", startDate: "2026-07-01", endDate: "2026-07-31" },
+  { id: "KM002", name: "Tặng charm khi mua nhẫn cưới", type: "gift", status: "active", startDate: "2026-06-01", endDate: "2026-08-31" },
+  { id: "KM003", name: "Miễn phí ship nội thành HN & HCM", type: "shipping", status: "active", startDate: "2026-01-01", endDate: "2026-12-31" },
+];
+
+/* ---------- Users & Roles ---------- */
+DTV.users = [
+  { id: "U001", name: "Nguyễn Quản Trị", email: "admin@dothivang.vn", phone: "0901111111", role: "Quản trị viên", status: "active", lastLogin: "2026-07-16T07:30:00" },
+  { id: "U002", name: "Trần Thị Kinh Doanh", email: "sales@dothivang.vn", phone: "0902222222", role: "Kinh doanh", status: "active", lastLogin: "2026-07-16T08:00:00" },
+  { id: "U003", name: "Lê Văn Sản Xuất", email: "production@dothivang.vn", phone: "0903333333", role: "Quản lý sản xuất", status: "active", lastLogin: "2026-07-15T17:00:00" },
+  { id: "U004", name: "Phạm Thị Kho", email: "warehouse@dothivang.vn", phone: "0904444444", role: "Kho hàng", status: "active", lastLogin: "2026-07-16T07:45:00" },
+  { id: "U005", name: "Hoàng Văn Kế Toán", email: "accountant@dothivang.vn", phone: "0905555555", role: "Kế toán", status: "active", lastLogin: "2026-07-16T08:15:00" },
+  { id: "U006", name: "Vũ Thị Tiếp Thị", email: "marketing@dothivang.vn", phone: "0906666666", role: "Tiếp thị", status: "active", lastLogin: "2026-07-15T16:30:00" },
+  { id: "U007", name: "Đặng Văn CSKH", email: "cskh@dothivang.vn", phone: "0907777777", role: "CSKH", status: "active", lastLogin: "2026-07-16T08:20:00" },
+  { id: "U008", name: "Bùi Thị Tạm", email: "temp@dothivang.vn", phone: "0908888888", role: "Kinh doanh", status: "inactive", lastLogin: "2026-06-01T10:00:00" },
+];
+
+DTV.roles = [
+  { id: "R001", name: "Quản trị viên", users: 1, permissions: "Toàn quyền", description: "Quản trị hệ thống đầy đủ" },
+  { id: "R002", name: "Kinh doanh", users: 2, permissions: "Đơn hàng, Khách hàng, Báo cáo", description: "Nhân viên kinh doanh" },
+  { id: "R003", name: "Quản lý sản xuất", users: 1, permissions: "Sản xuất, Đơn hàng (xem)", description: "Quản lý sản xuất" },
+  { id: "R004", name: "Kho hàng", users: 1, permissions: "Kho, Sản phẩm (xem)", description: "Nhân viên kho" },
+  { id: "R005", name: "Kế toán", users: 1, permissions: "Công nợ, Thanh toán, Báo cáo, Giá", description: "Kế toán" },
+  { id: "R006", name: "Tiếp thị", users: 1, permissions: "Nội dung, Tin tức, Khuyến mãi", description: "Tiếp thị và nội dung" },
+  { id: "R007", name: "CSKH", users: 1, permissions: "Khách hàng, Đơn hàng (xem), Tin tức", description: "Chăm sóc khách hàng" },
+];
+
+DTV.auditLogs = [
+  { id: "AL001", user: "Nguyễn Quản Trị", action: "Cập nhật giá vàng", detail: "Giá mua: 8.950.000 → 8.950.000", time: "2026-07-16T08:30:00", ip: "192.168.1.10" },
+  { id: "AL002", user: "Trần Thị Kinh Doanh", action: "Tạo đơn hàng", detail: "DH-2026-0845 — Vàng Bạc Phú Quý", time: "2026-07-16T08:15:00", ip: "192.168.1.25" },
+  { id: "AL003", user: "Hoàng Văn Kế Toán", action: "Xác nhận thanh toán", detail: "TT-2026-0456 — 500.000.000đ", time: "2026-07-15T16:00:00", ip: "192.168.1.30" },
+  { id: "AL004", user: "Lê Văn Sản Xuất", action: "Cập nhật tiến độ SX", detail: "SX-0836 — QC 95%", time: "2026-07-15T15:30:00", ip: "192.168.1.40" },
+  { id: "AL005", user: "Phạm Thị Kho", action: "Xuất kho", detail: "XK001 — Charm chữ Phúc ×15", time: "2026-07-15T14:00:00", ip: "192.168.1.50" },
+];
+
+/* ---------- Activities ---------- */
+DTV.activities = [
+  { user: "Trần Thị Kinh Doanh", action: "tạo đơn hàng", target: "DH-2026-0845", time: "5 phút trước", type: "order" },
+  { user: "Hệ thống", action: "cập nhật giá vàng", target: "Mua 8.950.000đ", time: "15 phút trước", type: "gold" },
+  { user: "Lê Văn Sản Xuất", action: "hoàn thành QC", target: "SX-0836", time: "1 giờ trước", type: "production" },
+  { user: "Hoàng Văn Kế Toán", action: "xác nhận thanh toán", target: "TT-2026-0449", time: "2 giờ trước", type: "payment" },
+  { user: "Phạm Thị Kho", action: "xuất kho", target: "DH-2026-0846", time: "3 giờ trước", type: "inventory" },
+  { user: "Đặng Văn CSKH", action: "thêm ghi chú khách hàng", target: "KH001", time: "4 giờ trước", type: "customer" },
+  { user: "Vũ Thị Tiếp Thị", action: "xuất bản tin tức", target: "TT001", time: "5 giờ trước", type: "cms" },
+  { user: "Nguyễn Quản Trị", action: "phê duyệt đơn hàng", target: "DH-2026-0847", time: "Hôm qua", type: "order" },
+];
+
+/* ---------- Tổng quan stats ---------- */
+DTV.dashboard = {
+  todayRevenue: 156800000,
+  monthlyRevenue: 4250000000,
+  outstandingDebt: 9345000000,
+  ordersWaiting: 2,
+  ordersProducing: 4,
+  ordersShipping: 2,
+  totalDealers: 12,
+  revenueChart: [
+    { label: "T2", value: 520 },
+    { label: "T3", value: 680 },
+    { label: "T4", value: 450 },
+    { label: "T5", value: 790 },
+    { label: "T6", value: 620 },
+    { label: "T7", value: 850 },
+    { label: "CN", value: 380 },
+  ],
+  orderChart: [
+    { label: "T2", value: 12 },
+    { label: "T3", value: 18 },
+    { label: "T4", value: 9 },
+    { label: "T5", value: 22 },
+    { label: "T6", value: 15 },
+    { label: "T7", value: 25 },
+    { label: "CN", value: 8 },
+  ],
+  monthlyRevenueChart: [
+    { label: "T1", value: 3200 },
+    { label: "T2", value: 3800 },
+    { label: "T3", value: 4100 },
+    { label: "T4", value: 3600 },
+    { label: "T5", value: 4500 },
+    { label: "T6", value: 4800 },
+    { label: "T7", value: 4250 },
+  ],
+};
+
+/* ---------- Status helpers ---------- */
+DTV.statusMap = {
+  active: { label: "Hoạt động", class: "tag-success" },
+  inactive: { label: "Ngưng", class: "tag-default" },
+  draft: { label: "Nháp", class: "tag-default" },
+  published: { label: "Đã xuất bản", class: "tag-success" },
+  scheduled: { label: "Lên lịch", class: "tag-info" },
+  archived: { label: "Lưu trữ", class: "tag-default" },
+  pending: { label: "Chờ duyệt", class: "tag-warning" },
+  producing: { label: "Đang SX", class: "tag-processing" },
+  shipping: { label: "Đang giao", class: "tag-info" },
+  completed: { label: "Hoàn thành", class: "tag-success" },
+  cancelled: { label: "Đã hủy", class: "tag-error" },
+  paid: { label: "Đã thanh toán", class: "tag-success" },
+  unpaid: { label: "Chưa TT", class: "tag-error" },
+  partial: { label: "TT một phần", class: "tag-warning" },
+  refunded: { label: "Đã hoàn", class: "tag-default" },
+  confirmed: { label: "Đã xác nhận", class: "tag-success" },
+  low_stock: { label: "Sắp hết", class: "tag-warning" },
+  out_of_stock: { label: "Hết hàng", class: "tag-error" },
+  VIP: { label: "VIP", class: "tag-gold" },
+  Gold: { label: "Vàng", class: "tag-warning" },
+  Silver: { label: "Bạc", class: "tag-default" },
+  Bronze: { label: "Đồng", class: "tag-default" },
+  queue: { label: "Chờ SX", class: "tag-default" },
+  casting: { label: "Đúc", class: "tag-info" },
+  crafting: { label: "Gia công", class: "tag-processing" },
+  polishing: { label: "Đánh bóng", class: "tag-info" },
+  setting: { label: "Gắn đá", class: "tag-warning" },
+  qc: { label: "Kiểm tra", class: "tag-gold" },
+  packing: { label: "Đóng gói", class: "tag-info" },
+  in_transit: { label: "Đang vận chuyển", class: "tag-processing" },
+  delivered: { label: "Đã giao", class: "tag-success" },
+  waiting: { label: "Chờ", class: "tag-default" },
+  in_progress: { label: "Đang làm", class: "tag-processing" },
+  urgent: { label: "Khẩn cấp", class: "tag-error" },
+  high: { label: "Cao", class: "tag-warning" },
+  normal: { label: "Thường", class: "tag-default" },
+};
+
+DTV.tag = (status) => {
+  const s = DTV.statusMap[status] || { label: status, class: "tag-default" };
+  return `<span class="tag ${s.class}">${s.label}</span>`;
+};

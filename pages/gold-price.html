@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giá vàng — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Giá vàng</h1>
+        <p class="page-desc">Cập nhật và theo dõi giá vàng SJC / 999.9</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="DTV.openModal('modalUpdatePrice')">Cập nhật giá</button>
+      </div>
+    </div>
+
+    <div class="grid grid-3 mb-24" id="priceCards"></div>
+
+    <div class="grid grid-2 mb-24">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Biểu đồ giá 14 ngày</h3>
+          <span class="card-extra">Giá bán / chỉ</span>
+        </div>
+        <div class="card-body">
+          <div id="priceChart" class="chart-container"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Lịch sử cập nhật</h3></div>
+        <div class="card-body no-padding">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Ngày</th><th>Giá mua</th><th>Giá bán</th><th>Chênh lệch</th></tr></thead>
+              <tbody id="historyTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Công thức tính giá sản phẩm</h3></div>
+      <div class="card-body">
+        <div class="desc-list">
+          <div class="desc-item"><div class="desc-label">Công thức</div><div class="desc-value">Giá SP = (Trọng lượng × Giá vàng) + (Trọng lượng × Tiền công) + Giá đá</div></div>
+          <div class="desc-item"><div class="desc-label">Giá vàng áp dụng</div><div class="desc-value">Giá bán hiện tại: <strong id="currentSell"></strong></div></div>
+          <div class="desc-item"><div class="desc-label">Ví dụ</div><div class="desc-value">Nhẫn 1.2 chỉ 24K = (1.2 × <span id="examplePrice"></span>) + (1.2 × 350.000) ≈ <span id="exampleTotal"></span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalUpdatePrice">
+    <div class="modal-header">
+      <h3 class="modal-title">Cập nhật giá vàng</h3>
+      <button class="modal-close" onclick="DTV.closeModal('modalUpdatePrice')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Giá mua (VND/chỉ)</label><input class="form-control" id="inputBuy" type="number" value="8950000"></div>
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Giá bán (VND/chỉ)</label><input class="form-control" id="inputSell" type="number" value="9100000"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Ghi chú</label><textarea class="form-control" rows="2" placeholder="Lý do điều chỉnh giá..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="DTV.closeModal('modalUpdatePrice')">Hủy</button>
+      <button class="btn btn-primary" onclick="updatePrice()">Xác nhận cập nhật</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "gold-price", breadcrumb: [{ label: "Giá vàng" }], title: "Giá vàng" });
+    document.querySelector("#modalUpdatePrice .modal-close").innerHTML = DTV.ICONS.close;
+
+    const gp = DTV.goldPrice.current;
+    const diff = gp.sell - gp.buy;
+
+    document.getElementById("priceCards").innerHTML = [
+      { label: "Giá mua", value: DTV.formatMoney(gp.buy), sub: "Cập nhật " + DTV.formatDateTime(gp.updatedAt) },
+      { label: "Giá bán", value: DTV.formatMoney(gp.sell), sub: "Chênh lệch " + DTV.formatMoney(diff), highlight: true },
+      { label: "Giá trung bình 7 ngày", value: DTV.formatMoney(Math.round(DTV.goldPrice.history.slice(0,7).reduce((s,h) => s + h.sell, 0) / 7)), sub: "Xu hướng ổn định" },
+    ].map(c => `
+      <div class="stat-card">
+        <div class="stat-label">${c.label}</div>
+        <div class="stat-value" style="font-size:22px;${c.highlight ? 'color:var(--primary)' : ''}">${c.value}</div>
+        <div class="cell-muted" style="font-size:12px;margin-top:4px">${c.sub}</div>
+      </div>`).join("");
+
+    const chartData = [...DTV.goldPrice.history].reverse().map(h => ({
+      label: h.date.slice(8),
+      value: Math.round(h.sell / 100000)
+    }));
+    DTV.renderLineChart("priceChart", chartData);
+
+    document.getElementById("historyTable").innerHTML = DTV.goldPrice.history.map((h, i) => {
+      const prev = DTV.goldPrice.history[i + 1];
+      const change = prev ? h.sell - prev.sell : 0;
+      return `<tr>
+        <td>${DTV.formatDate(h.date)}</td>
+        <td class="cell-money">${DTV.formatMoney(h.buy)}</td>
+        <td class="cell-money">${DTV.formatMoney(h.sell)}</td>
+        <td class="${change >= 0 ? 'text-success' : 'text-error'}">${change >= 0 ? '+' : ''}${DTV.formatMoney(change)}</td>
+      </tr>`;
+    }).join("");
+
+    document.getElementById("currentSell").textContent = DTV.formatMoney(gp.sell);
+    document.getElementById("examplePrice").textContent = DTV.formatMoney(gp.sell);
+    document.getElementById("exampleTotal").textContent = DTV.formatMoney(Math.round(1.2 * gp.sell + 1.2 * 350000));
+
+    function updatePrice() {
+      const buy = document.getElementById("inputBuy").value;
+      const sell = document.getElementById("inputSell").value;
+      DTV.closeModal("modalUpdatePrice");
+      DTV.toast("Đã cập nhật", `Giá mua: ${DTV.formatMoney(buy)} · Giá bán: ${DTV.formatMoney(sell)}`);
+    }
+  </script>
+</body>
+</html>

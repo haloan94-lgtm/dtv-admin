@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh mục — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Danh mục sản phẩm</h1>
+        <p class="page-desc">Quản lý cây danh mục trang sức vàng</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerCategory')">+ Thêm danh mục</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filter-panel">
+        <div class="filter-item">
+          <label>Tìm kiếm</label>
+          <input class="form-control" id="searchInput" placeholder="Tên, mã danh mục..." style="width:200px">
+        </div>
+        <div class="filter-item">
+          <label>Trạng thái</label>
+          <select class="form-control" id="filterStatus">
+            <option value="">Tất cả</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Ngưng</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="renderTable()">Lọc</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Tên danh mục</th>
+              <th>Slug</th>
+              <th>Danh mục cha</th>
+              <th>Số SP</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="categoryTable"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerCategory">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Thêm danh mục</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerCategory')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Tên danh mục</label><input class="form-control" placeholder="VD: Nhẫn cưới"></div>
+      <div class="form-group"><label class="form-label">Slug</label><input class="form-control" placeholder="nhan-cuoi"></div>
+      <div class="form-group"><label class="form-label">Danh mục cha</label>
+        <select class="form-control" id="parentSelect"><option value="">— Không có —</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Mô tả</label><textarea class="form-control" rows="3"></textarea></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerCategory')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerCategory');DTV.toast('Thành công','Đã thêm danh mục')">Lưu</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "categories", breadcrumb: [{ label: "Danh mục" }], title: "Danh mục" });
+    document.querySelector("#drawerCategory .modal-close").innerHTML = DTV.ICONS.close;
+
+    const parentOpts = DTV.categories.filter(c => !c.parent).map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+    document.getElementById("parentSelect").innerHTML += parentOpts;
+
+    function getParentName(id) {
+      if (!id) return "—";
+      const p = DTV.categories.find(c => c.id === id);
+      return p ? p.name : "—";
+    }
+
+    function buildTree(cats, parentId = null, depth = 0) {
+      return cats.filter(c => c.parent === parentId).flatMap(c => {
+        const indent = depth ? `<span style="padding-left:${depth * 24}px;color:var(--text-muted)">└ </span>` : "";
+        const row = { ...c, indent, depth };
+        return [row, ...buildTree(cats, c.id, depth + 1)];
+      });
+    }
+
+    function getFiltered() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const status = document.getElementById("filterStatus").value;
+      let tree = buildTree(DTV.categories);
+      return tree.filter(c => {
+        if (q && !(c.name + c.id + c.slug).toLowerCase().includes(q)) return false;
+        if (status && c.status !== status) return false;
+        return true;
+      });
+    }
+
+    function renderTable() {
+      const data = getFiltered();
+      document.getElementById("categoryTable").innerHTML = data.map(c => `
+        <tr>
+          <td class="cell-muted">${c.id}</td>
+          <td>${c.indent}<span class="fw-500">${c.name}</span></td>
+          <td class="cell-muted">${c.slug}</td>
+          <td>${getParentName(c.parent)}</td>
+          <td>${c.products}</td>
+          <td>${DTV.tag(c.status)}</td>
+          <td class="actions">
+            <button class="btn btn-link btn-sm" onclick="DTV.openDrawer('drawerCategory')">Sửa</button>
+            <button class="btn btn-link btn-sm" style="color:var(--error)" onclick="DTV.toast('Đã xóa','Danh mục ' + '${c.name}')">Xóa</button>
+          </td>
+        </tr>`).join("");
+      DTV.renderPagination("pagination", data.length);
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+    renderTable();
+  </script>
+</body>
+</html>

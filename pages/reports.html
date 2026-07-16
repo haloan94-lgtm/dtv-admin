@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo cáo — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Báo cáo</h1>
+        <p class="page-desc">Phân tích doanh thu, đơn hàng và công nợ</p>
+      </div>
+      <div class="page-actions">
+        <div class="segmented" id="periodToggle">
+          <button class="segmented-item">Tuần</button>
+          <button class="segmented-item active">Tháng</button>
+          <button class="segmented-item">Quý</button>
+        </div>
+        <button class="btn btn-default" onclick="DTV.toast('Xuất báo cáo','Đang tạo file PDF...','info')">Xuất PDF</button>
+      </div>
+    </div>
+
+    <div class="grid grid-4 mb-24" id="statRow"></div>
+
+    <div class="grid grid-2 mb-24">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Doanh thu theo tháng</h3>
+          <span class="card-extra">Triệu VND</span>
+        </div>
+        <div class="card-body"><div id="revenueChart"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Đơn hàng theo tuần</h3>
+          <span class="card-extra">Số đơn</span>
+        </div>
+        <div class="card-body"><div id="orderChart"></div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2 mb-24">
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Top đại lý theo doanh thu</h3></div>
+        <div class="card-body no-padding">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Đại lý</th><th>Hạng</th><th>Doanh thu</th><th>Đơn hàng</th></tr></thead>
+            <tbody id="topCustomers"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Công nợ theo hạng</h3></div>
+        <div class="card-body"><div id="debtChart"></div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-3" id="reportCards"></div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "reports", breadcrumb: [{ label: "Báo cáo" }], title: "Báo cáo" });
+
+    const dash = DTV.dashboard;
+    document.getElementById("statRow").innerHTML = [
+      { label: "Doanh thu tháng", value: DTV.formatMoney(dash.monthlyRevenue) },
+      { label: "Doanh thu hôm nay", value: DTV.formatMoney(dash.todayRevenue) },
+      { label: "Tổng công nợ", value: DTV.formatMoney(dash.outstandingDebt), cls: "text-error" },
+      { label: "Tổng đại lý", value: dash.totalDealers },
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.cls || ''}" style="font-size:20px">${s.value}</div></div>`).join("");
+
+    DTV.renderBarChart("revenueChart", dash.monthlyRevenueChart, { color: "#c9a227" });
+    DTV.renderBarChart("orderChart", dash.orderChart, { color: "#1677ff" });
+
+    const topCust = [...DTV.customers].sort((a,b) => b.totalSpent - a.totalSpent).slice(0, 5);
+    document.getElementById("topCustomers").innerHTML = topCust.map((c, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td><a href="customer-detail.html?id=${c.id}">${c.name}</a></td>
+        <td>${DTV.tag(c.tier)}</td>
+        <td class="cell-money">${DTV.formatMoney(c.totalSpent)}</td>
+        <td>${c.orders}</td>
+      </tr>`).join("");
+
+    const debtByTier = ["VIP","Gold","Silver","Bronze"].map(t => ({
+      label: t,
+      value: Math.round(DTV.debts.filter(d => d.tier === t).reduce((s,d) => s + d.totalDebt, 0) / 1000000)
+    }));
+    DTV.renderBarChart("debtChart", debtByTier, { color: "#ff4d4f" });
+
+    const reports = [
+      { title: "Báo cáo doanh thu", desc: "Chi tiết doanh thu theo sản phẩm, đại lý, khu vực", icon: "📊" },
+      { title: "Báo cáo đơn hàng", desc: "Thống kê đơn hàng theo trạng thái và thời gian", icon: "📦" },
+      { title: "Báo cáo công nợ", desc: "Phân tích tuổi nợ và khả năng thu hồi", icon: "💳" },
+      { title: "Báo cáo tồn kho", desc: "Luân chuyển hàng tồn kho và cảnh báo", icon: "🏭" },
+      { title: "Báo cáo sản xuất", desc: "Hiệu suất xưởng và thời gian hoàn thành", icon: "⚙️" },
+      { title: "Báo cáo giá vàng", desc: "Biến động giá và ảnh hưởng đến giá SP", icon: "🥇" },
+    ];
+    document.getElementById("reportCards").innerHTML = reports.map(r => `
+      <div class="card" style="cursor:pointer" onclick="DTV.toast('${r.title}','Đang tạo báo cáo...','info')">
+        <div class="card-body">
+          <div style="font-size:32px;margin-bottom:12px">${r.icon}</div>
+          <h4 class="fw-500 mb-8">${r.title}</h4>
+          <p class="cell-muted" style="font-size:13px">${r.desc}</p>
+          <button class="btn btn-link btn-sm mt-16">Tạo báo cáo →</button>
+        </div>
+      </div>`).join("");
+
+    document.querySelectorAll("#periodToggle .segmented-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#periodToggle .segmented-item").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        DTV.toast("Cập nhật", "Đang tải dữ liệu " + btn.textContent.toLowerCase(), "info");
+      });
+    });
+  </script>
+</body>
+</html>

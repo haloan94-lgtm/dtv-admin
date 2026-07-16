@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết sản phẩm — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" id="pageTitle">Chi tiết sản phẩm</h1>
+        <p class="page-desc" id="pageDesc"></p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-default" onclick="location.href='products.html'">← Quay lại</button>
+        <button class="btn btn-default" onclick="DTV.toast('Nhân bản','Đã tạo bản sao sản phẩm','info')">Nhân bản</button>
+        <button class="btn btn-primary" onclick="DTV.toast('Đã lưu','Cập nhật sản phẩm thành công')">Lưu thay đổi</button>
+      </div>
+    </div>
+
+    <div class="grid grid-2 mb-24">
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Hình ảnh sản phẩm</h3></div>
+        <div class="card-body">
+          <div style="height:280px;background:var(--gold-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:80px;margin-bottom:16px">💍</div>
+          <div class="grid grid-4 gap-8" id="thumbGrid"></div>
+          <button class="btn btn-dashed mt-16" style="width:100%" onclick="DTV.toast('Tải ảnh','Chọn file từ máy tính','info')">+ Tải ảnh lên</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Thông tin cơ bản</h3></div>
+        <div class="card-body" id="basicInfo"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-4 mb-24" id="statRow"></div>
+
+    <div class="card">
+      <div class="tabs" id="detailTabs">
+        <button class="tab-item active" data-tab="variants">Biến thể</button>
+        <button class="tab-item" data-tab="inventory">Tồn kho</button>
+        <button class="tab-item" data-tab="collections">Bộ sưu tập</button>
+        <button class="tab-item" data-tab="pricing">Giá & Công</button>
+        <button class="tab-item" data-tab="history">Lịch sử</button>
+      </div>
+      <div class="card-body">
+        <div class="tab-panel active" data-panel="variants" id="panelVariants"></div>
+        <div class="tab-panel" data-panel="inventory" id="panelInventory"></div>
+        <div class="tab-panel" data-panel="collections" id="panelCollections"></div>
+        <div class="tab-panel" data-panel="pricing" id="panelPricing"></div>
+        <div class="tab-panel" data-panel="history" id="panelHistory"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const product = DTV.products.find(p => p.id === params.get("id")) || DTV.products[0];
+    const inv = DTV.inventory.find(i => i.id === product.id);
+
+    DTV.renderLayout({
+      active: "products",
+      breadcrumb: [{ label: "Sản phẩm", href: "products.html" }, { label: product.name }],
+      title: product.name
+    });
+
+    document.getElementById("thumbGrid").innerHTML = [1,2,3,4].map(() =>
+      '<div style="height:64px;background:var(--bg-secondary);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;border:2px solid transparent;cursor:pointer">💍</div>'
+    ).join("");
+
+    document.getElementById("pageTitle").textContent = product.name;
+    document.getElementById("pageDesc").innerHTML = `${product.sku} · ${product.category} · ${DTV.tag(product.status)}`;
+
+    document.getElementById("basicInfo").innerHTML = `
+      <div class="desc-list">
+        <div class="desc-item"><div class="desc-label">SKU</div><div class="desc-value">${product.sku}</div></div>
+        <div class="desc-item"><div class="desc-label">Danh mục</div><div class="desc-value">${product.category}</div></div>
+        <div class="desc-item"><div class="desc-label">Loại vàng</div><div class="desc-value">${product.goldType} · ${product.goldColor}</div></div>
+        <div class="desc-item"><div class="desc-label">Trọng lượng</div><div class="desc-value">${product.weight} chỉ</div></div>
+        <div class="desc-item"><div class="desc-label">Đá / Ngọc</div><div class="desc-value">${product.stone}</div></div>
+        <div class="desc-item"><div class="desc-label">Size</div><div class="desc-value">${product.size}</div></div>
+        <div class="desc-item"><div class="desc-label">Giá bán</div><div class="desc-value cell-money">${DTV.formatMoney(product.price)}</div></div>
+        <div class="desc-item"><div class="desc-label">Đã bán</div><div class="desc-value">${product.sold} sản phẩm</div></div>
+      </div>`;
+
+    document.getElementById("statRow").innerHTML = [
+      { label: "Tồn kho", value: product.stock },
+      { label: "Đang giữ", value: product.reserved },
+      { label: "Khả dụng", value: product.stock - product.reserved },
+      { label: "Đã bán", value: product.sold },
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value" style="font-size:24px">${s.value}</div></div>`).join("");
+
+    const sizes = product.size.includes("-") ? product.size.split("-").map((s,i) => ({ size: s, stock: Math.floor(product.stock / 3) + i })) : [{ size: product.size, stock: product.stock }];
+    document.getElementById("panelVariants").innerHTML = `
+      <div class="page-actions mb-16"><button class="btn btn-primary btn-sm" onclick="DTV.toast('Thêm biến thể','Mở form thêm size/màu')">+ Thêm biến thể</button></div>
+      <table class="data-table">
+        <thead><tr><th>Size</th><th>Màu vàng</th><th>SKU phụ</th><th>Trọng lượng</th><th>Giá</th><th>Tồn kho</th><th>Trạng thái</th></tr></thead>
+        <tbody>${sizes.map((v,i) => `
+          <tr>
+            <td>${v.size}</td>
+            <td>${product.goldColor}</td>
+            <td class="cell-muted">${product.sku}-${String(i+1).padStart(2,"0")}</td>
+            <td>${product.weight} chỉ</td>
+            <td class="cell-money">${DTV.formatMoney(product.price)}</td>
+            <td>${v.stock}</td>
+            <td>${DTV.tag(product.status)}</td>
+          </tr>`).join("")}</tbody>
+      </table>`;
+
+    document.getElementById("panelInventory").innerHTML = inv ? `
+      <div class="desc-list mb-24">
+        <div class="desc-item"><div class="desc-label">Kho</div><div class="desc-value">${inv.warehouse}</div></div>
+        <div class="desc-item"><div class="desc-label">Tồn kho</div><div class="desc-value">${inv.stock} ${inv.unit}</div></div>
+        <div class="desc-item"><div class="desc-label">Đang giữ</div><div class="desc-value">${inv.reserved} ${inv.unit}</div></div>
+        <div class="desc-item"><div class="desc-label">Khả dụng</div><div class="desc-value">${inv.available} ${inv.unit}</div></div>
+        <div class="desc-item"><div class="desc-label">Nhập gần nhất</div><div class="desc-value">${DTV.formatDate(inv.lastIn)}</div></div>
+        <div class="desc-item"><div class="desc-label">Xuất gần nhất</div><div class="desc-value">${DTV.formatDate(inv.lastOut)}</div></div>
+      </div>
+      <h4 class="fw-500 mb-16">Lịch sử xuất nhập</h4>
+      <table class="data-table">
+        <thead><tr><th>Mã</th><th>Loại</th><th>Số lượng</th><th>Kho</th><th>Ngày</th><th>Ghi chú</th></tr></thead>
+        <tbody>${DTV.stockHistory.filter(h => h.product === product.name).map(h => `
+          <tr>
+            <td>${h.id}</td>
+            <td>${h.type === "in" ? DTV.tag("active") : DTV.tag("shipping")}</td>
+            <td>${h.qty}</td>
+            <td>${h.warehouse}</td>
+            <td>${DTV.formatDateTime(h.date)}</td>
+            <td class="cell-muted">${h.note}</td>
+          </tr>`).join("") || '<tr><td colspan="6" class="text-center cell-muted">Chưa có lịch sử</td></tr>'}</tbody>
+      </table>` : `<div class="empty-state"><div class="empty-state-title">Không có dữ liệu kho</div></div>`;
+
+    const col = DTV.collections.find(c => c.name === product.collection);
+    document.getElementById("panelCollections").innerHTML = product.collection && product.collection !== "—" ? `
+      <div class="card" style="max-width:400px">
+        <div style="height:100px;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:40px">✨</div>
+        <div class="card-body">
+          <h4 class="fw-500">${product.collection}</h4>
+          <div class="cell-muted" style="font-size:12px;margin:8px 0">${col ? col.id + " · " + col.products + " sản phẩm" : ""}</div>
+          ${col ? DTV.tag(col.status) : ""}
+          <button class="btn btn-link btn-sm mt-8" onclick="location.href='collections.html'">Xem bộ sưu tập →</button>
+        </div>
+      </div>` : `<div class="empty-state"><div class="empty-state-title">Chưa thuộc bộ sưu tập nào</div><button class="btn btn-primary btn-sm mt-16" onclick="DTV.toast('Thêm BST','Chọn bộ sưu tập')">+ Thêm vào bộ sưu tập</button></div>`;
+
+    const labor = DTV.laborPrices.find(l => product.category.includes(l.category.split(" ")[0])) || DTV.laborPrices[0];
+    document.getElementById("panelPricing").innerHTML = `
+      <div class="grid grid-2">
+        <div class="desc-list">
+          <div class="desc-item"><div class="desc-label">Giá bán lẻ</div><div class="desc-value cell-money">${DTV.formatMoney(product.price)}</div></div>
+          <div class="desc-item"><div class="desc-label">Giá vàng (${product.goldType})</div><div class="desc-value">${DTV.formatMoney(DTV.goldPrice.current.sell)} / chỉ</div></div>
+          <div class="desc-item"><div class="desc-label">Tiền công</div><div class="desc-value">${DTV.formatMoney(labor.laborPerChi)} / chỉ</div></div>
+        </div>
+        <div>
+          <h4 class="fw-500 mb-16">Giá theo hạng đại lý</h4>
+          <table class="data-table">
+            <thead><tr><th>Hạng</th><th>Chiết khấu</th><th>Giá sau CK</th></tr></thead>
+            <tbody>${DTV.tierPrices.map(t => `
+              <tr>
+                <td>${DTV.tag(t.tier)}</td>
+                <td>${t.discount}%</td>
+                <td class="cell-money">${DTV.formatMoney(Math.round(product.price * (1 - t.discount/100)))}</td>
+              </tr>`).join("")}</tbody>
+          </table>
+        </div>
+      </div>`;
+
+    document.getElementById("panelHistory").innerHTML = `
+      <div class="timeline">
+        <div class="timeline-item"><div class="timeline-time">${DTV.formatDateTime("2026-07-15T14:00:00")}</div><div class="timeline-content">Xuất kho 15 sp — Đơn DH-2026-0847</div></div>
+        <div class="timeline-item"><div class="timeline-time">${DTV.formatDate("2026-07-10")}</div><div class="timeline-content">Nhập kho 20 sp từ sản xuất</div></div>
+        <div class="timeline-item"><div class="timeline-time">${DTV.formatDate("2026-01-15")}</div><div class="timeline-content">Tạo sản phẩm — SKU ${product.sku}</div></div>
+      </div>`;
+
+    DTV.initTabs("#detailTabs");
+  </script>
+</body>
+</html>

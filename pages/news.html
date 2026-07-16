@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tin tức — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Tin tức</h1>
+        <p class="page-desc">Quản lý tin tức và thông báo cho đại lý</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="openEdit()">+ Viết tin mới</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filter-panel">
+        <div class="filter-item">
+          <label>Tìm kiếm</label>
+          <input class="form-control" id="searchInput" placeholder="Tiêu đề..." style="width:200px">
+        </div>
+        <div class="filter-item">
+          <label>Danh mục</label>
+          <select class="form-control" id="filterCategory">
+            <option value="">Tất cả</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Trạng thái</label>
+          <select class="form-control" id="filterStatus">
+            <option value="">Tất cả</option>
+            <option value="published">Đã xuất bản</option>
+            <option value="draft">Nháp</option>
+            <option value="scheduled">Lên lịch</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="renderTable()">Lọc</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Tiêu đề</th>
+              <th>Danh mục</th>
+              <th>Tác giả</th>
+              <th>Ngày xuất bản</th>
+              <th>Lượt xem</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="newsTable"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerNews">
+    <div class="drawer-header">
+      <h3 class="drawer-title" id="drawerNewsTitle">Viết tin mới</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerNews')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Tiêu đề</label><input class="form-control" id="newsTitle"></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label">Danh mục</label>
+          <select class="form-control" id="newsCategory">
+            <option>Giá vàng</option><option>Sản phẩm</option><option>Khuyến mãi</option><option>Hướng dẫn</option><option>Thông báo</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Trạng thái</label>
+          <select class="form-control" id="newsStatus">
+            <option value="draft">Nháp</option><option value="published">Xuất bản ngay</option><option value="scheduled">Lên lịch</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Nội dung</label><textarea class="form-control" id="newsContent" rows="8" placeholder="Nội dung tin tức..."></textarea></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerNews')">Hủy</button>
+      <button class="btn btn-default" onclick="saveNews('draft')">Lưu nháp</button>
+      <button class="btn btn-primary" onclick="saveNews('published')">Xuất bản</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modalDelete">
+    <div class="modal-header">
+      <h3 class="modal-title">Xóa tin tức</h3>
+      <button class="modal-close" onclick="DTV.closeModal('modalDelete')">×</button>
+    </div>
+    <div class="modal-body"><p>Bạn có chắc muốn xóa tin tức này?</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="DTV.closeModal('modalDelete')">Hủy</button>
+      <button class="btn btn-danger" onclick="DTV.closeModal('modalDelete');DTV.toast('Đã xóa','Tin tức đã được xóa')">Xóa</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "news", breadcrumb: [{ label: "Tin tức" }], title: "Tin tức" });
+    document.querySelectorAll(".modal-close").forEach(el => el.innerHTML = DTV.ICONS.close);
+
+    const cats = [...new Set(DTV.news.map(n => n.category))];
+    document.getElementById("filterCategory").innerHTML += cats.map(c => `<option>${c}</option>`).join("");
+
+    function openEditById(id) {
+      openEdit(DTV.news.find(n => n.id === id));
+    }
+
+    function openEdit(item) {
+      document.getElementById("drawerNewsTitle").textContent = item ? "Sửa tin tức" : "Viết tin mới";
+      document.getElementById("newsTitle").value = item ? item.title : "";
+      document.getElementById("newsCategory").value = item ? item.category : "Thông báo";
+      document.getElementById("newsContent").value = item ? "Nội dung bài viết " + item.title + "..." : "";
+      DTV.openDrawer("drawerNews");
+    }
+
+    function saveNews(status) {
+      DTV.closeDrawer("drawerNews");
+      DTV.toast(status === "published" ? "Đã xuất bản" : "Đã lưu nháp", document.getElementById("newsTitle").value || "Tin tức mới");
+    }
+
+    function getFiltered() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const cat = document.getElementById("filterCategory").value;
+      const status = document.getElementById("filterStatus").value;
+      return DTV.news.filter(n => {
+        if (q && !n.title.toLowerCase().includes(q)) return false;
+        if (cat && n.category !== cat) return false;
+        if (status && n.status !== status) return false;
+        return true;
+      });
+    }
+
+    function renderTable() {
+      const data = getFiltered();
+      document.getElementById("newsTable").innerHTML = data.map(n => `
+        <tr>
+          <td class="cell-muted">${n.id}</td>
+          <td class="fw-500">${n.title}</td>
+          <td>${n.category}</td>
+          <td>${n.author}</td>
+          <td>${n.publishedAt ? DTV.formatDateTime(n.publishedAt) : "—"}</td>
+          <td>${DTV.formatNumber(n.views)}</td>
+          <td>${DTV.tag(n.status)}</td>
+          <td class="actions">
+            <button class="btn btn-link btn-sm" onclick="openEditById('${n.id}')">Sửa</button>
+            <button class="btn btn-link btn-sm" style="color:var(--error)" onclick="DTV.openModal('modalDelete')">Xóa</button>
+          </td>
+        </tr>`).join("");
+      DTV.renderPagination("pagination", data.length);
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+    renderTable();
+  </script>
+</body>
+</html>

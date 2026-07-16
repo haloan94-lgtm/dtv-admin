@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bộ sưu tập — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Bộ sưu tập</h1>
+        <p class="page-desc">Quản lý bộ sưu tập sản phẩm theo mùa và chiến dịch</p>
+      </div>
+      <div class="page-actions">
+        <div class="segmented" id="viewToggle">
+          <button class="segmented-item active" data-view="grid">Lưới</button>
+          <button class="segmented-item" data-view="list">Danh sách</button>
+        </div>
+        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerCollection')">+ Tạo bộ sưu tập</button>
+      </div>
+    </div>
+
+    <div class="card mb-24">
+      <div class="filter-panel">
+        <div class="filter-item">
+          <label>Tìm kiếm</label>
+          <input class="form-control" id="searchInput" placeholder="Tên bộ sưu tập..." style="width:200px">
+        </div>
+        <div class="filter-item">
+          <label>Trạng thái</label>
+          <select class="form-control" id="filterStatus">
+            <option value="">Tất cả</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="draft">Nháp</option>
+            <option value="archived">Lưu trữ</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="render()">Lọc</button>
+      </div>
+    </div>
+
+    <div id="gridView" class="grid grid-3"></div>
+    <div id="listView" class="card" style="display:none">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Tên bộ sưu tập</th>
+              <th>Sản phẩm</th>
+              <th>Thời gian</th>
+              <th>Nổi bật</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="listTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerCollection">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Tạo bộ sưu tập</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerCollection')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Tên bộ sưu tập</label><input class="form-control"></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label">Ngày bắt đầu</label><input class="form-control" type="date"></div>
+        <div class="form-group"><label class="form-label">Ngày kết thúc</label><input class="form-control" type="date"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Mô tả</label><textarea class="form-control" rows="3"></textarea></div>
+      <div class="form-group">
+        <label class="form-label"><input type="checkbox"> Hiển thị nổi bật trên trang chủ</label>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerCollection')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerCollection');DTV.toast('Thành công','Đã tạo bộ sưu tập')">Lưu</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "collections", breadcrumb: [{ label: "Bộ sưu tập" }], title: "Bộ sưu tập" });
+    document.querySelector("#drawerCollection .modal-close").innerHTML = DTV.ICONS.close;
+
+    let currentView = "grid";
+
+    document.querySelectorAll("#viewToggle .segmented-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#viewToggle .segmented-item").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentView = btn.dataset.view;
+        document.getElementById("gridView").style.display = currentView === "grid" ? "" : "none";
+        document.getElementById("listView").style.display = currentView === "list" ? "" : "none";
+      });
+    });
+
+    function getFiltered() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const status = document.getElementById("filterStatus").value;
+      return DTV.collections.filter(c => {
+        if (q && !(c.name + c.id).toLowerCase().includes(q)) return false;
+        if (status && c.status !== status) return false;
+        return true;
+      });
+    }
+
+    function render() {
+      const data = getFiltered();
+      document.getElementById("gridView").innerHTML = data.map(c => `
+        <div class="card" style="overflow:hidden">
+          <div style="height:140px;background:linear-gradient(135deg,var(--gold-bg),#fff);display:flex;align-items:center;justify-content:center;font-size:48px">✨</div>
+          <div class="card-body">
+            <div class="flex gap-8 mb-8" style="justify-content:space-between;align-items:start">
+              <h3 class="fw-500" style="font-size:15px">${c.name}</h3>
+              ${DTV.tag(c.status)}
+            </div>
+            <div class="cell-muted" style="font-size:12px;margin-bottom:12px">${c.id} · ${c.products} sản phẩm</div>
+            <div class="cell-muted" style="font-size:12px">${DTV.formatDate(c.startDate)} — ${DTV.formatDate(c.endDate)}</div>
+            ${c.featured ? '<div style="margin-top:8px">' + DTV.tag("VIP") + ' Nổi bật</div>' : ""}
+            <div class="flex gap-8 mt-16">
+              <button class="btn btn-default btn-sm" style="flex:1" onclick="DTV.openDrawer('drawerCollection')">Sửa</button>
+              <a class="btn btn-link btn-sm" href="products.html">Xem SP</a>
+            </div>
+          </div>
+        </div>`).join("");
+
+      document.getElementById("listTable").innerHTML = data.map(c => `
+        <tr>
+          <td class="cell-muted">${c.id}</td>
+          <td class="fw-500">${c.name}</td>
+          <td>${c.products}</td>
+          <td>${DTV.formatDate(c.startDate)} — ${DTV.formatDate(c.endDate)}</td>
+          <td>${c.featured ? "⭐ Có" : "—"}</td>
+          <td>${DTV.tag(c.status)}</td>
+          <td class="actions">
+            <button class="btn btn-link btn-sm" onclick="DTV.openDrawer('drawerCollection')">Sửa</button>
+            <button class="btn btn-link btn-sm">Sản phẩm</button>
+          </td>
+        </tr>`).join("");
+    }
+
+    document.getElementById("searchInput").addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>

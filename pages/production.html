@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sản xuất — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Quản lý sản xuất</h1>
+        <p class="page-desc">Theo dõi tiến độ sản xuất trang sức vàng theo công đoạn</p>
+      </div>
+      <div class="page-actions">
+        <div class="segmented" id="viewToggle">
+          <button class="segmented-item active" data-view="kanban">Bảng kéo thả</button>
+          <button class="segmented-item" data-view="list">Danh sách</button>
+        </div>
+        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerProduction')">+ Tạo lệnh SX</button>
+      </div>
+    </div>
+
+    <div class="grid grid-4 mb-24" id="statRow"></div>
+
+    <div id="kanbanView">
+      <div class="kanban" id="kanbanBoard"></div>
+    </div>
+
+    <div id="listView" class="card" style="display:none">
+      <div class="filter-panel">
+        <div class="filter-item">
+          <label>Công đoạn</label>
+          <select class="form-control" id="filterStage">
+            <option value="">Tất cả</option>
+            <option value="queue">Chờ SX</option>
+            <option value="casting">Đúc</option>
+            <option value="crafting">Gia công</option>
+            <option value="polishing">Đánh bóng</option>
+            <option value="setting">Gắn đá</option>
+            <option value="qc">Kiểm tra</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Ưu tiên</label>
+          <select class="form-control" id="filterPriority">
+            <option value="">Tất cả</option>
+            <option value="urgent">Khẩn cấp</option>
+            <option value="high">Cao</option>
+            <option value="normal">Thường</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="renderList()">Lọc</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã SX</th>
+              <th>Đơn hàng</th>
+              <th>Khách hàng</th>
+              <th>Sản phẩm</th>
+              <th>Công đoạn</th>
+              <th>Thợ</th>
+              <th>Tiến độ</th>
+              <th>Dự kiến</th>
+              <th>Ưu tiên</th>
+            </tr>
+          </thead>
+          <tbody id="listTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerProduction">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Tạo lệnh sản xuất</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerProduction')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Đơn hàng</label>
+        <select class="form-control" id="drawerOrderSelect"></select>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Sản phẩm</label>
+        <select class="form-control" id="drawerProductSelect"></select>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label">Xưởng</label><select class="form-control"><option>Xưởng 1</option><option>Xưởng 2</option></select></div>
+        <div class="form-group"><label class="form-label">Ưu tiên</label><select class="form-control"><option value="normal">Thường</option><option value="high">Cao</option><option value="urgent">Khẩn cấp</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Ghi chú</label><textarea class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerProduction')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerProduction');DTV.toast('Thành công','Đã tạo lệnh sản xuất')">Tạo lệnh</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "production", breadcrumb: [{ label: "Sản xuất" }], title: "Sản xuất" });
+    document.querySelector("#drawerProduction .modal-close").innerHTML = DTV.ICONS.close;
+    document.getElementById("drawerOrderSelect").innerHTML = DTV.orders.filter(o => o.status === "producing" || o.status === "pending").map(o => `<option>${o.id} — ${o.customer}</option>`).join("");
+    document.getElementById("drawerProductSelect").innerHTML = DTV.products.slice(0,5).map(p => `<option>${p.name}</option>`).join("");
+
+    const stages = [
+      { id: "queue", label: "Chờ SX" },
+      { id: "casting", label: "Đúc" },
+      { id: "crafting", label: "Gia công" },
+      { id: "polishing", label: "Đánh bóng" },
+      { id: "setting", label: "Gắn đá" },
+      { id: "qc", label: "Kiểm tra" },
+    ];
+
+    document.getElementById("statRow").innerHTML = [
+      { label: "Tổng lệnh SX", value: DTV.production.length },
+      { label: "Đang làm", value: DTV.production.filter(p => p.stage !== "queue").length },
+      { label: "Khẩn cấp", value: DTV.production.filter(p => p.priority === "urgent").length },
+      { label: "Hoàn thành tuần", value: 12 },
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value" style="font-size:28px">${s.value}</div></div>`).join("");
+
+    function renderKanban() {
+      document.getElementById("kanbanBoard").innerHTML = stages.map(st => {
+        const cards = DTV.production.filter(p => p.stage === st.id);
+        return `
+          <div class="kanban-col">
+            <div class="kanban-col-header">
+              <span>${st.label}</span>
+              <span class="tag tag-default">${cards.length}</span>
+            </div>
+            ${cards.map(p => `
+              <div class="kanban-card" onclick="DTV.toast('${p.id}','${p.product} — ${p.progress}%')">
+                <div class="flex gap-8" style="justify-content:space-between;margin-bottom:6px">
+                  <span class="fw-500" style="font-size:13px">${p.id}</span>
+                  ${DTV.tag(p.priority)}
+                </div>
+                <div style="font-size:13px;margin-bottom:4px">${p.product}</div>
+                <div class="cell-muted" style="font-size:11px;margin-bottom:8px">${p.customer}</div>
+                <div class="progress" style="height:4px"><div class="progress-bar" style="width:${p.progress}%"></div></div>
+                <div class="cell-muted" style="font-size:11px;margin-top:6px">${p.assignee} · Dự kiến ${DTV.formatDate(p.eta)}</div>
+              </div>`).join("")}
+          </div>`;
+      }).join("");
+    }
+
+    function renderList() {
+      const stage = document.getElementById("filterStage").value;
+      const priority = document.getElementById("filterPriority").value;
+      const data = DTV.production.filter(p => {
+        if (stage && p.stage !== stage) return false;
+        if (priority && p.priority !== priority) return false;
+        return true;
+      });
+      document.getElementById("listTable").innerHTML = data.map(p => `
+        <tr>
+          <td><a href="order-detail.html?id=${p.orderId}">${p.id}</a></td>
+          <td><a href="order-detail.html?id=${p.orderId}">${p.orderId}</a></td>
+          <td>${p.customer}</td>
+          <td>${p.product}</td>
+          <td>${DTV.tag(p.stage)}</td>
+          <td>${p.assignee}</td>
+          <td><div class="progress" style="width:80px;display:inline-block;vertical-align:middle"><div class="progress-bar" style="width:${p.progress}%"></div></div> ${p.progress}%</td>
+          <td>${DTV.formatDate(p.eta)}</td>
+          <td>${DTV.tag(p.priority)}</td>
+        </tr>`).join("");
+    }
+
+    document.querySelectorAll("#viewToggle .segmented-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#viewToggle .segmented-item").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const v = btn.dataset.view;
+        document.getElementById("kanbanView").style.display = v === "kanban" ? "" : "none";
+        document.getElementById("listView").style.display = v === "list" ? "" : "none";
+        if (v === "list") renderList();
+      });
+    });
+
+    renderKanban();
+  </script>
+</body>
+</html>

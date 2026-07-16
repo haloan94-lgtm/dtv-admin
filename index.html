@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tổng quan — Đô Thị Vàng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              gold: {
+                DEFAULT: "#c9a227",
+                hover: "#b8911f",
+                bg: "#faf6eb",
+                border: "#e8d48a",
+              },
+            },
+          },
+        },
+        corePlugins: { preflight: false },
+      };
+    </script>
+    <link rel="stylesheet" href="assets/css/main.css" />
+  </head>
+  <body>
+    <div id="page-root" style="display: none">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Tổng quan</h1>
+          <p class="page-desc">Tổng quan hoạt động kinh doanh — 16/07/2026</p>
+        </div>
+        <div class="page-actions">
+          <div class="segmented" id="dashPeriod">
+            <button class="segmented-item active">Hôm nay</button>
+            <button class="segmented-item">Tuần này</button>
+            <button class="segmented-item">Tháng này</button>
+          </div>
+          <button
+            class="btn btn-default"
+            onclick="
+              DTV.toast('Xuất báo cáo', 'Đang tạo file Excel...', 'info')
+            "
+          >
+            Xuất báo cáo
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-4 mb-24" id="statCards"></div>
+
+      <!-- Order status row -->
+      <div class="grid grid-4 mb-24" id="orderStats"></div>
+
+      <!-- Charts + Gold -->
+      <div
+        class="grid grid-3 mb-24"
+        style="grid-template-columns: 1fr 1fr 320px"
+      >
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Doanh thu tuần này</h3>
+            <span class="card-extra">Đơn vị: triệu đồng</span>
+          </div>
+          <div class="card-body">
+            <div
+              id="revenueChart"
+              class="chart-container"
+              style="height: auto"
+            ></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Đơn hàng tuần này</h3>
+            <span class="card-extra">Số đơn</span>
+          </div>
+          <div class="card-body">
+            <div
+              id="orderChart"
+              class="chart-container"
+              style="height: auto"
+            ></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Giá vàng hôm nay</h3>
+            <a
+              href="pages/gold-price.html"
+              class="card-extra"
+              style="color: var(--primary)"
+              >Chi tiết →</a
+            >
+          </div>
+          <div class="card-body">
+            <div id="goldPriceCard"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions + Top products + Top customers -->
+      <div class="grid grid-3 mb-24">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Thao tác nhanh</h3>
+          </div>
+          <div class="card-body">
+            <div class="grid grid-3 gap-8" id="quickActions"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Sản phẩm bán chạy</h3>
+            <a
+              href="pages/products.html"
+              class="card-extra"
+              style="color: var(--primary)"
+              >Xem tất cả →</a
+            >
+          </div>
+          <div class="card-body no-padding">
+            <div id="topProducts"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Đại lý hàng đầu</h3>
+            <a
+              href="pages/customers.html"
+              class="card-extra"
+              style="color: var(--primary)"
+              >Xem tất cả →</a
+            >
+          </div>
+          <div class="card-body no-padding">
+            <div id="topCustomers"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent orders + Activities -->
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Đơn hàng gần đây</h3>
+            <a
+              href="pages/orders.html"
+              class="card-extra"
+              style="color: var(--primary)"
+              >Xem tất cả →</a
+            >
+          </div>
+          <div class="card-body no-padding">
+            <div class="table-wrap">
+              <table class="data-table" id="recentOrdersTable">
+                <thead>
+                  <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Hoạt động gần đây</h3>
+          </div>
+          <div class="card-body" id="activitiesFeed"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/layout.js"></script>
+    <script>
+      DTV.renderLayout({
+        active: "dashboard",
+        breadcrumb: [{ label: "Tổng quan" }],
+        title: "Tổng quan",
+      });
+
+      const d = DTV.dashboard;
+
+      document.getElementById("statCards").innerHTML = [
+        {
+          label: "Doanh thu hôm nay",
+          value: DTV.formatMoney(d.todayRevenue),
+          trend: "+12.5%",
+          up: true,
+          iconBg: "#faf6eb",
+          iconColor: "#c9a227",
+        },
+        {
+          label: "Doanh thu tháng này",
+          value: DTV.formatMoney(d.monthlyRevenue),
+          trend: "+8.2%",
+          up: true,
+          iconBg: "#f6ffed",
+          iconColor: "#52c41a",
+        },
+        {
+          label: "Công nợ tồn",
+          value: DTV.formatMoney(d.outstandingDebt),
+          trend: "+3.1%",
+          up: false,
+          iconBg: "#fff2f0",
+          iconColor: "#ff4d4f",
+        },
+        {
+          label: "Tổng đại lý",
+          value: d.totalDealers,
+          trend: "+2 mới",
+          up: true,
+          iconBg: "#e6f4ff",
+          iconColor: "#1677ff",
+        },
+      ]
+        .map(
+          (s) => `
+      <div class="stat-card">
+        <div class="stat-card-row">
+          <div>
+            <div class="stat-label">${s.label}</div>
+            <div class="stat-value" style="font-size:22px">${s.value}</div>
+            <div class="stat-footer">
+              <span class="${s.up ? "stat-trend-up" : "stat-trend-down"}">${s.up ? "↑" : "↓"} ${s.trend}</span>
+              <span>so với hôm qua</span>
+            </div>
+          </div>
+          <div class="stat-icon" style="background:${s.iconBg};color:${s.iconColor}">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+        </div>
+      </div>`,
+        )
+        .join("");
+
+      document.getElementById("orderStats").innerHTML = [
+        {
+          label: "Chờ duyệt",
+          value: d.ordersWaiting,
+          color: "tag-warning",
+          href: "pages/orders.html",
+        },
+        {
+          label: "Đang sản xuất",
+          value: d.ordersProducing,
+          color: "tag-processing",
+          href: "pages/production.html",
+        },
+        {
+          label: "Đang giao hàng",
+          value: d.ordersShipping,
+          color: "tag-info",
+          href: "pages/orders.html",
+        },
+        {
+          label: "Hoàn thành hôm nay",
+          value: 3,
+          color: "tag-success",
+          href: "pages/orders.html",
+        },
+      ]
+        .map(
+          (s) => `
+      <a href="${s.href}" class="stat-card" style="text-decoration:none;color:inherit">
+        <div class="stat-label">${s.label}</div>
+        <div class="stat-value">${s.value}</div>
+        <div class="stat-footer"><span class="tag ${s.color}">Đơn hàng</span></div>
+      </a>`,
+        )
+        .join("");
+
+      DTV.renderBarChart("revenueChart", d.revenueChart);
+      DTV.renderBarChart("orderChart", d.orderChart, { color: "#1677ff" });
+
+      const gp = DTV.goldPrice.current;
+      document.getElementById("goldPriceCard").innerHTML = `
+      <div style="text-align:center;padding:8px 0">
+        <div class="text-muted" style="font-size:13px;margin-bottom:4px">Giá mua</div>
+        <div class="fw-600 text-error" style="font-size:24px">${DTV.formatNumber(gp.buy)}</div>
+        <div class="text-muted" style="font-size:12px;margin-bottom:16px">đ/chỉ</div>
+        <div class="text-muted" style="font-size:13px;margin-bottom:4px">Giá bán</div>
+        <div class="fw-600 text-success" style="font-size:24px">${DTV.formatNumber(gp.sell)}</div>
+        <div class="text-muted" style="font-size:12px;margin-bottom:16px">đ/chỉ</div>
+        <div class="text-muted" style="font-size:12px">Cập nhật: ${DTV.formatDateTime(gp.updatedAt)}</div>
+      </div>`;
+
+      document.getElementById("quickActions").innerHTML = [
+        {
+          label: "Tạo đơn hàng",
+          href: "pages/orders.html",
+          icon: DTV.ICONS.orders,
+        },
+        {
+          label: "Thêm khách",
+          href: "pages/customers.html",
+          icon: DTV.ICONS.customers,
+        },
+        {
+          label: "Nhập kho",
+          href: "pages/inventory.html",
+          icon: DTV.ICONS.inventory,
+        },
+        {
+          label: "Cập nhật giá vàng",
+          href: "pages/gold-price.html",
+          icon: DTV.ICONS.gold,
+        },
+        {
+          label: "Thanh toán",
+          href: "pages/payments.html",
+          icon: DTV.ICONS.payments,
+        },
+        {
+          label: "Báo cáo",
+          href: "pages/reports.html",
+          icon: DTV.ICONS.reports,
+        },
+      ]
+        .map(
+          (a) => `
+      <a class="quick-action" href="${a.href}">
+        <div class="quick-action-icon">${a.icon}</div>
+        <span class="quick-action-label">${a.label}</span>
+      </a>`,
+        )
+        .join("");
+
+      const topP = [...DTV.products]
+        .sort((a, b) => b.sold - a.sold)
+        .slice(0, 5);
+      document.getElementById("topProducts").innerHTML = `
+      <table class="data-table"><tbody>
+        ${topP
+          .map(
+            (p, i) => `
+          <tr>
+            <td style="width:32px;color:var(--text-tertiary)">${i + 1}</td>
+            <td>
+              <div class="fw-500">${p.name}</div>
+              <div class="cell-muted" style="font-size:12px">${p.sku}</div>
+            </td>
+            <td class="text-right cell-money">${p.sold} đã bán</td>
+          </tr>`,
+          )
+          .join("")}
+      </tbody></table>`;
+
+      const topC = [...DTV.customers]
+        .sort((a, b) => b.totalSpent - a.totalSpent)
+        .slice(0, 5);
+      document.getElementById("topCustomers").innerHTML = `
+      <table class="data-table"><tbody>
+        ${topC
+          .map(
+            (c, i) => `
+          <tr>
+            <td style="width:40px"><div class="avatar avatar-sm">${DTV.initials(c.name)}</div></td>
+            <td>
+              <div class="fw-500">${c.name}</div>
+              <div class="cell-muted" style="font-size:12px">${c.city} · ${DTV.tag(c.tier)}</div>
+            </td>
+            <td class="text-right cell-money" style="font-size:13px">${DTV.formatMoney(c.totalSpent)}</td>
+          </tr>`,
+          )
+          .join("")}
+      </tbody></table>`;
+
+      const tbody = document.querySelector("#recentOrdersTable tbody");
+      tbody.innerHTML = DTV.orders
+        .slice(0, 6)
+        .map(
+          (o) => `
+      <tr>
+        <td><a href="pages/order-detail.html?id=${o.id}" class="fw-500">${o.id}</a></td>
+        <td>${o.customer}</td>
+        <td class="cell-money">${DTV.formatMoney(o.total)}</td>
+        <td>${DTV.tag(o.status)}</td>
+      </tr>`,
+        )
+        .join("");
+
+      document.getElementById("activitiesFeed").innerHTML = DTV.activities
+        .map(
+          (a) => `
+      <div class="activity-item">
+        <div class="avatar avatar-sm">${a.user === "Hệ thống" ? "⚙" : DTV.initials(a.user)}</div>
+        <div class="activity-content">
+          <div class="activity-text"><strong>${a.user}</strong> ${a.action} <span class="text-primary">${a.target}</span></div>
+          <div class="activity-time">${a.time}</div>
+        </div>
+      </div>`,
+        )
+        .join("");
+
+      document
+        .querySelectorAll("#dashPeriod .segmented-item")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll("#dashPeriod .segmented-item")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+          });
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cài đặt — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Cài đặt</h1>
+        <p class="page-desc">Cấu hình hệ thống cổng Đô Thị Vàng</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="saveSettings()">Lưu cài đặt</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tabs" id="settingsTabs">
+        <button class="tab-item active" data-tab="company">Công ty</button>
+        <button class="tab-item" data-tab="system">Hệ thống</button>
+        <button class="tab-item" data-tab="notification">Thông báo</button>
+        <button class="tab-item" data-tab="email">Email</button>
+        <button class="tab-item" data-tab="security">Bảo mật</button>
+      </div>
+      <div class="card-body">
+        <div class="tab-panel active" data-panel="company">
+          <div class="form-row cols-2">
+            <div class="form-group"><label class="form-label">Tên công ty</label><input class="form-control" value="Công ty TNHH Trang Sức Đô Thị Vàng"></div>
+            <div class="form-group"><label class="form-label">Mã số thuế</label><input class="form-control" value="0123456789"></div>
+          </div>
+          <div class="form-row cols-2">
+            <div class="form-group"><label class="form-label">Hotline</label><input class="form-control" value="1900 9999"></div>
+            <div class="form-group"><label class="form-label">Email liên hệ</label><input class="form-control" value="contact@dothivang.vn"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Địa chỉ trụ sở</label><input class="form-control" value="123 Phố Vàng, Hoàn Kiếm, Hà Nội"></div>
+          <div class="form-group"><label class="form-label">Logo</label>
+            <div style="display:flex;gap:16px;align-items:center">
+              <div style="width:80px;height:80px;background:var(--gold-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary);font-size:24px">ĐV</div>
+              <button class="btn btn-dashed">Thay đổi logo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" data-panel="system">
+          <div class="form-row cols-2">
+            <div class="form-group"><label class="form-label">Múi giờ</label><select class="form-control"><option selected>Asia/Ho_Chi_Minh (UTC+7)</option></select></div>
+            <div class="form-group"><label class="form-label">Ngôn ngữ mặc định</label><select class="form-control"><option selected>Tiếng Việt</option><option>English</option></select></div>
+          </div>
+          <div class="form-row cols-2">
+            <div class="form-group"><label class="form-label">Đơn vị trọng lượng</label><select class="form-control"><option selected>Chỉ vàng</option><option>Gram</option></select></div>
+            <div class="form-group"><label class="form-label">Đơn vị tiền tệ</label><select class="form-control"><option selected>VND</option></select></div>
+          </div>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Tự động cập nhật giá SP khi giá vàng thay đổi</label></div>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Bật chế độ bảo trì cổng đại lý</label></div>
+        </div>
+
+        <div class="tab-panel" data-panel="notification">
+          <h4 class="fw-500 mb-16">Thông báo trong hệ thống</h4>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Đơn hàng mới</label></div>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Thanh toán chờ xác nhận</label></div>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Cảnh báo tồn kho thấp</label></div>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Công nợ quá hạn</label></div>
+          <div class="form-group"><label class="form-label"><input type="checkbox"> Thay đổi giá vàng</label></div>
+          <hr style="margin:24px 0;border-color:var(--border)">
+          <h4 class="fw-500 mb-16">Thông báo đẩy</h4>
+          <div class="form-group"><label class="form-label"><input type="checkbox"> Gửi thông báo đẩy qua trình duyệt</label></div>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Gửi Zalo OA cho đại lý VIP</label></div>
+        </div>
+
+        <div class="tab-panel" data-panel="email">
+          <div class="form-row cols-2">
+            <div class="form-group"><label class="form-label">Máy chủ SMTP</label><input class="form-control" value="smtp.gmail.com"></div>
+            <div class="form-group"><label class="form-label">Cổng</label><input class="form-control" value="587"></div>
+          </div>
+          <div class="form-row cols-2">
+            <div class="form-group"><label class="form-label">Email gửi</label><input class="form-control" value="noreply@dothivang.vn"></div>
+            <div class="form-group"><label class="form-label">Tên hiển thị</label><input class="form-control" value="Đô Thị Vàng"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Mật khẩu SMTP</label><input class="form-control" type="password" value="••••••••"></div>
+          <button class="btn btn-default" onclick="DTV.toast('Thử email','Đã gửi email thử nghiệm','info')">Gửi email thử</button>
+          <hr style="margin:24px 0;border-color:var(--border)">
+          <h4 class="fw-500 mb-16">Mẫu email</h4>
+          <div class="form-group"><label class="form-label">Xác nhận đơn hàng</label><textarea class="form-control" rows="2">Kính gửi {customer_name}, đơn hàng {order_id} đã được xác nhận...</textarea></div>
+          <div class="form-group"><label class="form-label">Nhắc công nợ</label><textarea class="form-control" rows="2">Kính gửi {customer_name}, công nợ hiện tại: {debt_amount}...</textarea></div>
+        </div>
+
+        <div class="tab-panel" data-panel="security">
+          <div class="form-row cols-2">
+            <div class="form-group"><label class="form-label">Thời gian phiên đăng nhập (phút)</label><input class="form-control" type="number" value="480"></div>
+            <div class="form-group"><label class="form-label">Số lần đăng nhập sai tối đa</label><input class="form-control" type="number" value="5"></div>
+          </div>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Bắt buộc xác thực 2 bước cho quản trị viên</label></div>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Ghi log hoạt động người dùng</label></div>
+          <div class="form-group"><label class="form-label"><input type="checkbox"> Giới hạn IP truy cập trang quản trị</label></div>
+          <hr style="margin:24px 0;border-color:var(--border)">
+          <h4 class="fw-500 mb-16">Nhật ký hoạt động gần đây</h4>
+          <table class="data-table">
+            <thead><tr><th>Thời gian</th><th>Người dùng</th><th>Hành động</th><th>IP</th></tr></thead>
+            <tbody id="auditTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "settings", breadcrumb: [{ label: "Cài đặt" }], title: "Cài đặt" });
+    DTV.initTabs("#settingsTabs");
+
+    document.getElementById("auditTable").innerHTML = DTV.auditLogs.map(l => `
+      <tr>
+        <td class="cell-muted" style="font-size:12px">${DTV.formatDateTime(l.time)}</td>
+        <td>${l.user}</td>
+        <td>${l.action} — <span class="cell-muted">${l.detail}</span></td>
+        <td class="cell-muted">${l.ip}</td>
+      </tr>`).join("");
+
+    function saveSettings() {
+      DTV.toast("Đã lưu", "Cài đặt hệ thống đã được cập nhật");
+    }
+  </script>
+</body>
+</html>

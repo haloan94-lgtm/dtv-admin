@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kho hàng — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Kho hàng</h1>
+        <p class="page-desc">Quản lý tồn kho trang sức vàng theo kho</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-default" onclick="DTV.openDrawer('drawerStockOut')">Xuất kho</button>
+        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerStockIn')">+ Nhập kho</button>
+      </div>
+    </div>
+
+    <div class="grid grid-4 mb-24" id="statRow"></div>
+
+    <div class="card">
+      <div class="tabs" id="invTabs">
+        <button class="tab-item active" data-tab="stock">Tồn kho</button>
+        <button class="tab-item" data-tab="history">Lịch sử xuất nhập</button>
+      </div>
+      <div class="card-body no-padding">
+        <div class="tab-panel active" data-panel="stock">
+          <div class="filter-panel" style="border-bottom:1px solid var(--border)">
+            <div class="filter-item">
+              <label>Tìm kiếm</label>
+              <input class="form-control" id="searchInput" placeholder="SKU, tên..." style="width:200px">
+            </div>
+            <div class="filter-item">
+              <label>Kho</label>
+              <select class="form-control" id="filterWarehouse">
+                <option value="">Tất cả</option>
+                <option>Kho Vàng 24K</option>
+                <option>Kho Vàng 18K</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <label>Trạng thái</label>
+              <select class="form-control" id="filterStatus">
+                <option value="">Tất cả</option>
+                <option value="active">Đủ hàng</option>
+                <option value="low_stock">Sắp hết</option>
+                <option value="out_of_stock">Hết hàng</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="renderStock()">Lọc</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Sản phẩm</th>
+                  <th>Kho</th>
+                  <th>Tồn kho</th>
+                  <th>Đang giữ</th>
+                  <th>Khả dụng</th>
+                  <th>Trọng lượng</th>
+                  <th>Nhập/Xuất gần nhất</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="stockTable"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+        <div class="tab-panel" data-panel="history">
+          <div class="filter-panel" style="border-bottom:1px solid var(--border)">
+            <div class="filter-item">
+              <label>Loại</label>
+              <select class="form-control" id="filterHistoryType">
+                <option value="">Tất cả</option>
+                <option value="in">Nhập kho</option>
+                <option value="out">Xuất kho</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="renderHistory()">Lọc</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mã phiếu</th>
+                  <th>Loại</th>
+                  <th>Sản phẩm</th>
+                  <th>Số lượng</th>
+                  <th>Kho</th>
+                  <th>Người thực hiện</th>
+                  <th>Thời gian</th>
+                  <th>Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody id="historyTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerStockIn">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Nhập kho</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerStockIn')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Sản phẩm</label>
+        <select class="form-control" id="stockInProduct"></select>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label">Kho</label><select class="form-control"><option>Kho Vàng 24K</option><option>Kho Vàng 18K</option></select></div>
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Số lượng</label><input class="form-control" type="number"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Ghi chú</label><textarea class="form-control" rows="2" placeholder="Nhập từ sản xuất / Nhập từ NCC"></textarea></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerStockIn')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerStockIn');DTV.toast('Thành công','Đã nhập kho')">Xác nhận nhập</button>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerStockOut">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Xuất kho</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerStockOut')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Đơn hàng</label>
+        <select class="form-control" id="stockOutOrder"></select>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Sản phẩm</label>
+        <select class="form-control" id="stockOutProduct"></select>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Số lượng</label><input class="form-control" type="number"></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerStockOut')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerStockOut');DTV.toast('Thành công','Đã xuất kho')">Xác nhận xuất</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "inventory", breadcrumb: [{ label: "Kho hàng" }], title: "Kho hàng" });
+    document.querySelectorAll(".modal-close").forEach(el => el.innerHTML = DTV.ICONS.close);
+    document.getElementById("stockInProduct").innerHTML = DTV.products.map(p => `<option>${p.sku} — ${p.name}</option>`).join("");
+    document.getElementById("stockOutOrder").innerHTML = DTV.orders.filter(o => o.status !== "cancelled").map(o => `<option>${o.id} — ${o.customer}</option>`).join("");
+    document.getElementById("stockOutProduct").innerHTML = DTV.products.filter(p => p.stock > 0).map(p => `<option>${p.sku} — ${p.name} (còn ${p.stock})</option>`).join("");
+
+    const totalStock = DTV.inventory.reduce((s,i) => s + i.stock, 0);
+    const totalReserved = DTV.inventory.reduce((s,i) => s + i.reserved, 0);
+    const alerts = DTV.inventory.filter(i => i.status !== "active").length;
+
+    document.getElementById("statRow").innerHTML = [
+      { label: "Tổng tồn kho", value: DTV.formatNumber(totalStock) },
+      { label: "Đang giữ", value: DTV.formatNumber(totalReserved) },
+      { label: "Khả dụng", value: DTV.formatNumber(totalStock - totalReserved) },
+      { label: "Cảnh báo", value: alerts, warn: true },
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.warn ? 'text-warning' : ''}" style="font-size:24px">${s.value}</div></div>`).join("");
+
+    function renderStock() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const wh = document.getElementById("filterWarehouse").value;
+      const status = document.getElementById("filterStatus").value;
+      const data = DTV.inventory.filter(i => {
+        if (q && !(i.name + i.sku).toLowerCase().includes(q)) return false;
+        if (wh && i.warehouse !== wh) return false;
+        if (status && i.status !== status) return false;
+        return true;
+      });
+      document.getElementById("stockTable").innerHTML = data.map(i => `
+        <tr>
+          <td class="cell-muted">${i.sku}</td>
+          <td><a href="product-detail.html?id=${i.id}">${i.name}</a></td>
+          <td>${i.warehouse}</td>
+          <td>${i.stock} ${i.unit}</td>
+          <td>${i.reserved}</td>
+          <td class="fw-500">${i.available}</td>
+          <td>${i.weight} chỉ</td>
+          <td class="cell-muted" style="font-size:12px">↓ ${DTV.formatDate(i.lastIn)}<br>↑ ${DTV.formatDate(i.lastOut)}</td>
+          <td>${DTV.tag(i.status)}</td>
+          <td class="actions">
+            <button class="btn btn-link btn-sm" onclick="DTV.openDrawer('drawerStockIn')">Nhập</button>
+            <button class="btn btn-link btn-sm" onclick="DTV.openDrawer('drawerStockOut')">Xuất</button>
+          </td>
+        </tr>`).join("");
+      DTV.renderPagination("pagination", data.length);
+    }
+
+    function renderHistory() {
+      const type = document.getElementById("filterHistoryType").value;
+      const data = DTV.stockHistory.filter(h => !type || h.type === type);
+      document.getElementById("historyTable").innerHTML = data.map(h => `
+        <tr>
+          <td>${h.id}</td>
+          <td>${h.type === "in" ? '<span class="tag tag-success">Nhập</span>' : '<span class="tag tag-warning">Xuất</span>'}</td>
+          <td>${h.product}</td>
+          <td>${h.qty}</td>
+          <td>${h.warehouse}</td>
+          <td>${h.by}</td>
+          <td>${DTV.formatDateTime(h.date)}</td>
+          <td class="cell-muted">${h.note}</td>
+        </tr>`).join("");
+    }
+
+    DTV.initTabs("#invTabs");
+    document.getElementById("searchInput").addEventListener("input", renderStock);
+    renderStock();
+    renderHistory();
+  </script>
+</body>
+</html>

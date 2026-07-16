@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Công nợ — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Công nợ</h1>
+        <p class="page-desc">Theo dõi công nợ và phân tích tuổi nợ đại lý</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-default" onclick="DTV.toast('Xuất báo cáo','Đang tạo file Excel...','info')">Xuất báo cáo</button>
+        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerReminder')">Gửi nhắc nợ</button>
+      </div>
+    </div>
+
+    <div class="grid grid-4 mb-24" id="statRow"></div>
+
+    <div class="card mb-24">
+      <div class="card-header"><h3 class="card-title">Phân tích tuổi nợ</h3></div>
+      <div class="card-body">
+        <div id="agingChart" class="chart-container"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filter-panel">
+        <div class="filter-item">
+          <label>Tìm kiếm</label>
+          <input class="form-control" id="searchInput" placeholder="Tên đại lý..." style="width:200px">
+        </div>
+        <div class="filter-item">
+          <label>Hạng</label>
+          <select class="form-control" id="filterTier">
+            <option value="">Tất cả</option>
+            <option value="VIP">VIP</option><option value="Gold">Vàng</option><option value="Silver">Bạc</option><option value="Bronze">Đồng</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="renderTable()">Lọc</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Đại lý</th>
+              <th>Hạng</th>
+              <th>Tổng nợ</th>
+              <th>Trong hạn</th>
+              <th>Quá hạn</th>
+              <th>0–30 ngày</th>
+              <th>31–60 ngày</th>
+              <th>61–90 ngày</th>
+              <th>Hạn mức</th>
+              <th>TT gần nhất</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="debtTable"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerReminder">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Gửi nhắc nợ</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerReminder')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label class="form-label">Đại lý</label>
+        <select class="form-control" id="reminderCustomer"></select>
+      </div>
+      <div class="form-group"><label class="form-label">Kênh gửi</label>
+        <select class="form-control"><option>Email</option><option>SMS</option><option>Zalo OA</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Nội dung</label>
+        <textarea class="form-control" rows="4">Kính gửi Quý đại lý, Đô Thị Vàng xin nhắc công nợ còn lại. Vui lòng thanh toán trong thời gian sớm nhất.</textarea>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerReminder')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerReminder');DTV.toast('Đã gửi','Nhắc nợ đã được gửi')">Gửi</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "debt", breadcrumb: [{ label: "Công nợ" }], title: "Công nợ" });
+    document.querySelector("#drawerReminder .modal-close").innerHTML = DTV.ICONS.close;
+    document.getElementById("reminderCustomer").innerHTML = DTV.debts.map(d => `<option>${d.customer}</option>`).join("");
+
+    const totalDebt = DTV.debts.reduce((s, d) => s + d.totalDebt, 0);
+    const totalOverdue = DTV.debts.reduce((s, d) => s + d.overdue, 0);
+
+    document.getElementById("statRow").innerHTML = [
+      { label: "Tổng công nợ", value: DTV.formatMoney(totalDebt) },
+      { label: "Quá hạn", value: DTV.formatMoney(totalOverdue), cls: "text-error" },
+      { label: "Đại lý có nợ", value: DTV.debts.length },
+      { label: "Tỷ lệ quá hạn", value: Math.round(totalOverdue / totalDebt * 100) + "%", cls: "text-warning" },
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.cls || ''}" style="font-size:20px">${s.value}</div></div>`).join("");
+
+    const agingTotals = DTV.debts.reduce((acc, d) => ({
+      a30: acc.a30 + d.aging30, a60: acc.a60 + d.aging60, a90: acc.a90 + d.aging90
+    }), { a30: 0, a60: 0, a90: 0 });
+    DTV.renderBarChart("agingChart", [
+      { label: "0–30 ngày", value: Math.round(agingTotals.a30 / 1000000) },
+      { label: "31–60 ngày", value: Math.round(agingTotals.a60 / 1000000) },
+      { label: "61–90 ngày", value: Math.round(agingTotals.a90 / 1000000) },
+      { label: ">90 ngày", value: Math.round(totalOverdue / 1000000) },
+    ], { color: "#c9a227" });
+
+    function getFiltered() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const tier = document.getElementById("filterTier").value;
+      return DTV.debts.filter(d => {
+        if (q && !d.customer.toLowerCase().includes(q)) return false;
+        if (tier && d.tier !== tier) return false;
+        return true;
+      });
+    }
+
+    function renderTable() {
+      const data = getFiltered();
+      document.getElementById("debtTable").innerHTML = data.map(d => `
+        <tr>
+          <td>
+            <a href="customer-detail.html?id=${d.customerId}" class="fw-500">${d.customer}</a>
+            <div class="cell-muted" style="font-size:12px">${d.customerId}</div>
+          </td>
+          <td>${DTV.tag(d.tier)}</td>
+          <td class="cell-money fw-500 text-error">${DTV.formatMoney(d.totalDebt)}</td>
+          <td class="cell-money">${DTV.formatMoney(d.current)}</td>
+          <td class="cell-money text-error">${DTV.formatMoney(d.overdue)}</td>
+          <td class="cell-money">${DTV.formatMoney(d.aging30)}</td>
+          <td class="cell-money">${DTV.formatMoney(d.aging60)}</td>
+          <td class="cell-money">${DTV.formatMoney(d.aging90)}</td>
+          <td class="cell-money">${DTV.formatMoney(d.creditLimit)}</td>
+          <td>${DTV.formatDate(d.lastPayment)}</td>
+          <td class="actions">
+            <a class="btn btn-link btn-sm" href="customer-detail.html?id=${d.customerId}">Chi tiết</a>
+            <button class="btn btn-link btn-sm" onclick="DTV.openDrawer('drawerReminder')">Nhắc nợ</button>
+          </td>
+        </tr>`).join("");
+      DTV.renderPagination("pagination", data.length);
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+    renderTable();
+  </script>
+</body>
+</html>

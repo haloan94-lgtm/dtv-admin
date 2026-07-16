@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết đơn hàng — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" id="pageTitle">Chi tiết đơn hàng</h1>
+        <p class="page-desc" id="pageDesc"></p>
+      </div>
+      <div class="page-actions" id="pageActions"></div>
+    </div>
+
+    <div class="steps mb-24" id="orderSteps"></div>
+
+    <div class="grid grid-4 mb-24" id="statRow"></div>
+
+    <div class="grid grid-2 mb-24">
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Thông tin khách hàng</h3></div>
+        <div class="card-body" id="customerInfo"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Thanh toán & Công nợ</h3></div>
+        <div class="card-body" id="paymentInfo"></div>
+      </div>
+    </div>
+
+    <div class="card mb-24">
+      <div class="card-header"><h3 class="card-title">Sản phẩm đặt hàng</h3><span class="card-extra" id="itemCount"></span></div>
+      <div class="card-body no-padding">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Sản phẩm</th><th>SKU</th><th>SL</th><th>TL (chỉ)</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+            <tbody id="itemTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Tiến độ sản xuất</h3></div>
+        <div class="card-body" id="productionPanel"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">Vận chuyển</h3></div>
+        <div class="card-body" id="shipmentPanel"></div>
+      </div>
+    </div>
+
+    <div class="card mt-24">
+      <div class="card-header"><h3 class="card-title">Timeline đơn hàng</h3></div>
+      <div class="card-body" id="timelinePanel"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalApprove">
+    <div class="modal-header">
+      <h3 class="modal-title">Phê duyệt đơn hàng</h3>
+      <button class="modal-close" onclick="DTV.closeModal('modalApprove')">×</button>
+    </div>
+    <div class="modal-body">
+      <p>Xác nhận phê duyệt đơn hàng <strong id="approveOrderId"></strong>?</p>
+      <div class="form-group mt-16"><label class="form-label">Ghi chú</label><textarea class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="DTV.closeModal('modalApprove')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeModal('modalApprove');DTV.toast('Đã duyệt','Đơn hàng đã được phê duyệt')">Xác nhận duyệt</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const order = DTV.orders.find(o => o.id === params.get("id")) || DTV.orders[0];
+    const customer = DTV.customers.find(c => c.id === order.customerId);
+    const items = DTV.orderItems[order.id] || DTV.products.slice(0, order.items > 3 ? 3 : order.items).map((p,i) => ({
+      productId: p.id, name: p.name, sku: p.sku, qty: Math.ceil(order.items / 3) || 1,
+      weight: p.weight, unitPrice: p.price, total: p.price * (Math.ceil(order.items / 3) || 1)
+    }));
+    const production = DTV.production.filter(p => p.orderId === order.id);
+
+    DTV.renderLayout({
+      active: "orders",
+      breadcrumb: [{ label: "Đơn hàng", href: "orders.html" }, { label: order.id }],
+      title: order.id
+    });
+    document.querySelector("#modalApprove .modal-close").innerHTML = DTV.ICONS.close;
+
+    document.getElementById("pageTitle").textContent = order.id;
+    document.getElementById("pageDesc").innerHTML = `${order.customer} · ${DTV.formatDateTime(order.createdAt)} · ${DTV.tag(order.status)}`;
+
+    document.getElementById("pageActions").innerHTML = `
+      <button class="btn btn-default" onclick="location.href='orders.html'">← Quay lại</button>
+      ${order.status === "pending" ? '<button class="btn btn-primary" onclick="document.getElementById(\'approveOrderId\').textContent=\'' + order.id + '\';DTV.openModal(\'modalApprove\')">Phê duyệt</button>' : ""}
+      <button class="btn btn-default" onclick="DTV.toast('In đơn','Đang tạo PDF...','info')">In đơn hàng</button>`;
+
+    const stepOrder = ["pending", "producing", "shipping", "completed"];
+    const currentIdx = stepOrder.indexOf(order.status === "cancelled" ? "pending" : order.status);
+    const stepLabels = ["Chờ duyệt", "Sản xuất", "Vận chuyển", "Hoàn thành"];
+    document.getElementById("orderSteps").innerHTML = stepLabels.map((l, i) => `
+      <div class="step-item ${i < currentIdx ? "done" : i === currentIdx ? "active" : ""}">
+        <div class="step-icon">${i + 1}</div>
+        <div class="step-label">${l}</div>
+      </div>`).join("");
+
+    document.getElementById("statRow").innerHTML = [
+      { label: "Tổng đơn", value: DTV.formatMoney(order.total) },
+      { label: "Đã thanh toán", value: DTV.formatMoney(order.paid) },
+      { label: "Còn nợ", value: DTV.formatMoney(order.debt) },
+      { label: "Sản phẩm", value: order.items + " món" },
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value" style="font-size:18px">${s.value}</div></div>`).join("");
+
+    document.getElementById("customerInfo").innerHTML = customer ? `
+      <div class="desc-list">
+        <div class="desc-item"><div class="desc-label">Đại lý</div><div class="desc-value"><a href="customer-detail.html?id=${customer.id}">${customer.name}</a></div></div>
+        <div class="desc-item"><div class="desc-label">Liên hệ</div><div class="desc-value">${customer.contact} · ${customer.phone}</div></div>
+        <div class="desc-item"><div class="desc-label">Địa chỉ</div><div class="desc-value">${customer.address}, ${customer.district}, ${customer.city}</div></div>
+        <div class="desc-item"><div class="desc-label">Hạng</div><div class="desc-value">${DTV.tag(customer.tier)}</div></div>
+      </div>` : `<p class="cell-muted">${order.customer}</p>`;
+
+    document.getElementById("paymentInfo").innerHTML = `
+      <div class="desc-list">
+        <div class="desc-item"><div class="desc-label">Trạng thái TT</div><div class="desc-value">${DTV.tag(order.payment)}</div></div>
+        <div class="desc-item"><div class="desc-label">Đã TT</div><div class="desc-value cell-money">${DTV.formatMoney(order.paid)}</div></div>
+        <div class="desc-item"><div class="desc-label">Còn nợ</div><div class="desc-value cell-money text-error">${DTV.formatMoney(order.debt)}</div></div>
+        <div class="desc-item"><div class="desc-label">Phê duyệt</div><div class="desc-value">${order.approvedAt ? DTV.formatDateTime(order.approvedAt) : "Chưa duyệt"}</div></div>
+      </div>
+      <div class="mt-16"><div class="progress" style="height:8px"><div class="progress-bar" style="width:${Math.round(order.paid/order.total*100)}%"></div></div>
+      <div class="cell-muted" style="font-size:12px;margin-top:4px">${Math.round(order.paid/order.total*100)}% đã thanh toán</div></div>`;
+
+    document.getElementById("itemCount").textContent = items.length + " dòng";
+    document.getElementById("itemTable").innerHTML = items.map(it => `
+      <tr>
+        <td><a href="product-detail.html?id=${it.productId}">${it.name}</a></td>
+        <td class="cell-muted">${it.sku}</td>
+        <td>${it.qty}</td>
+        <td>${it.weight}</td>
+        <td class="cell-money">${DTV.formatMoney(it.unitPrice)}</td>
+        <td class="cell-money fw-500">${DTV.formatMoney(it.total)}</td>
+      </tr>`).join("") + `
+      <tr style="background:var(--bg-secondary)">
+        <td colspan="5" class="text-right fw-500">Tổng cộng</td>
+        <td class="cell-money fw-500">${DTV.formatMoney(order.total)}</td>
+      </tr>`;
+
+    document.getElementById("productionPanel").innerHTML = production.length ? production.map(p => `
+      <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+        <div class="flex gap-8" style="justify-content:space-between;margin-bottom:8px">
+          <span class="fw-500">${p.product}</span>
+          ${DTV.tag(p.stage)}
+        </div>
+        <div class="cell-muted" style="font-size:12px;margin-bottom:8px">${p.id} · ${p.assignee} · ${p.factory}</div>
+        <div class="progress"><div class="progress-bar" style="width:${p.progress}%"></div></div>
+        <div class="cell-muted" style="font-size:12px;margin-top:4px">${p.progress}% · Dự kiến ${DTV.formatDate(p.eta)}</div>
+      </div>`).join("") : `<div class="empty-state"><div class="empty-state-title">${DTV.tag(order.production)} Chưa có lệnh SX</div></div>`;
+
+    const shipLabels = { pending: "Chờ giao hàng", packing: "Đang đóng gói", in_transit: "Đang vận chuyển", delivered: "Đã giao hàng", cancelled: "Đã hủy" };
+    document.getElementById("shipmentPanel").innerHTML = `
+      <div class="desc-list">
+        <div class="desc-item"><div class="desc-label">Trạng thái</div><div class="desc-value">${DTV.tag(order.shipment)}</div></div>
+        <div class="desc-item"><div class="desc-label">Mô tả</div><div class="desc-value">${shipLabels[order.shipment] || order.shipment}</div></div>
+        <div class="desc-item"><div class="desc-label">Địa chỉ giao</div><div class="desc-value">${customer ? customer.address + ", " + customer.city : "—"}</div></div>
+        <div class="desc-item"><div class="desc-label">Vận chuyển</div><div class="desc-value">Giao hàng nội thành / Viettel Post</div></div>
+      </div>`;
+
+    const events = [
+      { time: order.createdAt, text: "Đơn hàng được tạo bởi đại lý" },
+      order.approvedAt && { time: order.approvedAt, text: "Đơn hàng được phê duyệt" },
+      order.status !== "pending" && { time: order.approvedAt || order.createdAt, text: "Chuyển sang sản xuất" },
+      ["shipping","completed"].includes(order.status) && { time: "2026-07-14T10:00:00", text: "Hoàn thành sản xuất, chuyển giao hàng" },
+      order.status === "completed" && { time: "2026-07-12T16:00:00", text: "Giao hàng thành công" },
+      order.status === "cancelled" && { time: order.createdAt, text: "Đơn hàng đã bị hủy" },
+    ].filter(Boolean);
+
+    document.getElementById("timelinePanel").innerHTML = `<div class="timeline">${events.map(e => `
+      <div class="timeline-item">
+        <div class="timeline-time">${DTV.formatDateTime(e.time)}</div>
+        <div class="timeline-content">${e.text}</div>
+      </div>`).join("")}</div>`;
+  </script>
+</body>
+</html>

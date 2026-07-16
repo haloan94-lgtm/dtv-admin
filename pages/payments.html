@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Thanh toán</h1>
+        <p class="page-desc">Xác nhận và quản lý giao dịch thanh toán từ đại lý</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerPayment')">+ Ghi nhận thanh toán</button>
+      </div>
+    </div>
+
+    <div class="grid grid-3 mb-24" id="statRow"></div>
+
+    <div class="card">
+      <div class="filter-panel">
+        <div class="filter-item">
+          <label>Tìm kiếm</label>
+          <input class="form-control" id="searchInput" placeholder="Mã TT, khách hàng..." style="width:200px">
+        </div>
+        <div class="filter-item">
+          <label>Trạng thái</label>
+          <select class="form-control" id="filterStatus">
+            <option value="">Tất cả</option>
+            <option value="confirmed">Đã xác nhận</option>
+            <option value="pending">Chờ xác nhận</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Phương thức</label>
+          <select class="form-control" id="filterMethod">
+            <option value="">Tất cả</option>
+            <option>Chuyển khoản</option>
+            <option>Tiền mặt</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="renderTable()">Lọc</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã TT</th>
+              <th>Đại lý</th>
+              <th>Số tiền</th>
+              <th>Phương thức</th>
+              <th>Ngân hàng</th>
+              <th>Đơn hàng</th>
+              <th>Thời gian</th>
+              <th>Người xác nhận</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="paymentTable"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerPayment">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Ghi nhận thanh toán</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerPayment')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Đại lý</label>
+        <select class="form-control" id="payCustomer"></select>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Đơn hàng</label>
+        <select class="form-control" id="payOrder"></select>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Số tiền</label><input class="form-control" type="number"></div>
+        <div class="form-group"><label class="form-label">Phương thức</label><select class="form-control"><option>Chuyển khoản</option><option>Tiền mặt</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Ngân hàng</label><input class="form-control" placeholder="VD: Vietcombank"></div>
+      <div class="form-group"><label class="form-label">Ghi chú</label><textarea class="form-control" rows="2"></textarea></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerPayment')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerPayment');DTV.toast('Thành công','Đã ghi nhận thanh toán')">Lưu</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modalConfirm">
+    <div class="modal-header">
+      <h3 class="modal-title">Xác nhận thanh toán</h3>
+      <button class="modal-close" onclick="DTV.closeModal('modalConfirm')">×</button>
+    </div>
+    <div class="modal-body" id="confirmBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="DTV.closeModal('modalConfirm')">Hủy</button>
+      <button class="btn btn-primary" onclick="confirmPayment()">Xác nhận</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "payments", breadcrumb: [{ label: "Thanh toán" }], title: "Thanh toán" });
+    document.querySelectorAll(".modal-close").forEach(el => el.innerHTML = DTV.ICONS.close);
+    document.getElementById("payCustomer").innerHTML = DTV.customers.map(c => `<option>${c.name}</option>`).join("");
+    document.getElementById("payOrder").innerHTML = DTV.orders.map(o => `<option>${o.id} — ${DTV.formatMoney(o.debt)} còn nợ</option>`).join("");
+
+    let pendingId = null;
+    const confirmed = DTV.payments.filter(p => p.status === "confirmed");
+    const pending = DTV.payments.filter(p => p.status === "pending");
+
+    document.getElementById("statRow").innerHTML = [
+      { label: "Tổng đã thu (tháng)", value: DTV.formatMoney(confirmed.reduce((s,p) => s + p.amount, 0)) },
+      { label: "Chờ xác nhận", value: pending.length, cls: "text-warning" },
+      { label: "Giao dịch tháng", value: DTV.payments.length },
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.cls || ''}" style="font-size:24px">${s.value}</div></div>`).join("");
+
+    function getFiltered() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const status = document.getElementById("filterStatus").value;
+      const method = document.getElementById("filterMethod").value;
+      return DTV.payments.filter(p => {
+        if (q && !(p.id + p.customer + p.orderId).toLowerCase().includes(q)) return false;
+        if (status && p.status !== status) return false;
+        if (method && p.method !== method) return false;
+        return true;
+      });
+    }
+
+    function openConfirm(id) {
+      const p = DTV.payments.find(x => x.id === id);
+      pendingId = id;
+      document.getElementById("confirmBody").innerHTML = `
+        <p>Xác nhận thanh toán <strong>${p.id}</strong>?</p>
+        <div class="desc-list mt-16">
+          <div class="desc-item"><div class="desc-label">Đại lý</div><div class="desc-value">${p.customer}</div></div>
+          <div class="desc-item"><div class="desc-label">Số tiền</div><div class="desc-value cell-money">${DTV.formatMoney(p.amount)}</div></div>
+          <div class="desc-item"><div class="desc-label">Đơn hàng</div><div class="desc-value">${p.orderId}</div></div>
+        </div>`;
+      DTV.openModal("modalConfirm");
+    }
+
+    function confirmPayment() {
+      DTV.closeModal("modalConfirm");
+      DTV.toast("Đã xác nhận", "Thanh toán " + pendingId + " đã được xác nhận");
+      renderTable();
+    }
+
+    function renderTable() {
+      const data = getFiltered();
+      document.getElementById("paymentTable").innerHTML = data.map(p => `
+        <tr>
+          <td class="fw-500">${p.id}</td>
+          <td>${p.customer}</td>
+          <td class="cell-money fw-500">${DTV.formatMoney(p.amount)}</td>
+          <td>${p.method}</td>
+          <td class="cell-muted">${p.bank}</td>
+          <td><a href="order-detail.html?id=${p.orderId}">${p.orderId}</a></td>
+          <td>${DTV.formatDateTime(p.date)}</td>
+          <td>${p.by}</td>
+          <td>${DTV.tag(p.status)}</td>
+          <td class="actions">
+            ${p.status === "pending" ? `<button class="btn btn-primary btn-sm" onclick="openConfirm('${p.id}')">Xác nhận</button>` : `<button class="btn btn-link btn-sm" onclick="DTV.toast('Chi tiết','${p.id}')">Xem</button>`}
+          </td>
+        </tr>`).join("");
+      DTV.renderPagination("pagination", data.length);
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+    renderTable();
+  </script>
+</body>
+</html>

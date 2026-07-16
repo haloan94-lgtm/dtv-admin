@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nội dung web — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Nội dung web</h1>
+        <p class="page-desc">Quản lý nội dung cổng đại lý — banner, bộ sưu tập, khuyến mãi</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" id="btnAdd" onclick="openAdd()">+ Thêm mới</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tabs" id="cmsTabs">
+        <button class="tab-item active" data-tab="banners">Banner trang</button>
+        <button class="tab-item" data-tab="collections">Bộ sưu tập nổi bật</button>
+        <button class="tab-item" data-tab="promotions">Khuyến mãi</button>
+      </div>
+      <div class="card-body no-padding">
+        <div class="tab-panel active" data-panel="banners">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Mã</th><th>Tiêu đề</th><th>Vị trí</th><th>Thứ tự</th><th>Thời gian</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+              <tbody id="bannerTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="tab-panel" data-panel="collections">
+          <div class="grid grid-3" style="padding:24px" id="cmsCollections"></div>
+        </div>
+        <div class="tab-panel" data-panel="promotions">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Mã</th><th>Tên chương trình</th><th>Loại</th><th>Thời gian</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+              <tbody id="promoTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerCms">
+    <div class="drawer-header">
+      <h3 class="drawer-title" id="drawerCmsTitle">Thêm banner</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerCms')">×</button>
+    </div>
+    <div class="drawer-body" id="drawerCmsBody"></div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerCms')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerCms');DTV.toast('Thành công','Đã lưu nội dung web')">Lưu</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "cms", breadcrumb: [{ label: "Nội dung web" }], title: "Nội dung web" });
+    document.querySelector("#drawerCms .modal-close").innerHTML = DTV.ICONS.close;
+
+    let activeTab = "banners";
+
+    document.getElementById("bannerTable").innerHTML = DTV.banners.map(b => `
+      <tr>
+        <td class="cell-muted">${b.id}</td>
+        <td class="fw-500">${b.title}</td>
+        <td>${b.position}</td>
+        <td>${b.order}</td>
+        <td class="cell-muted" style="font-size:12px">${DTV.formatDate(b.startDate)} — ${DTV.formatDate(b.endDate)}</td>
+        <td>${DTV.tag(b.status)}</td>
+        <td class="actions">
+          <button class="btn btn-link btn-sm" onclick="openEdit('banner')">Sửa</button>
+          <button class="btn btn-link btn-sm" style="color:var(--error)" onclick="DTV.toast('Đã xóa', '${b.title}')">Xóa</button>
+        </td>
+      </tr>`).join("");
+
+    document.getElementById("cmsCollections").innerHTML = DTV.collections.filter(c => c.featured).map(c => `
+      <div class="card">
+        <div style="height:100px;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:36px">✨</div>
+        <div class="card-body">
+          <h4 class="fw-500">${c.name}</h4>
+          <div class="cell-muted" style="font-size:12px;margin:8px 0">${c.products} sản phẩm</div>
+          ${DTV.tag(c.status)}
+          <div class="flex gap-8 mt-16">
+            <button class="btn btn-default btn-sm" onclick="openEdit('collection')">Sửa</button>
+            <label class="switch"><input type="checkbox" ${c.featured ? "checked" : ""} onchange="DTV.toast('Cập nhật','Đã thay đổi hiển thị nổi bật')"><span class="switch-slider"></span></label>
+          </div>
+        </div>
+      </div>`).join("");
+
+    const promoTypes = { discount: "Giảm giá", gift: "Quà tặng", shipping: "Miễn phí ship" };
+    document.getElementById("promoTable").innerHTML = DTV.promotions.map(p => `
+      <tr>
+        <td class="cell-muted">${p.id}</td>
+        <td class="fw-500">${p.name}</td>
+        <td>${promoTypes[p.type] || p.type}</td>
+        <td class="cell-muted" style="font-size:12px">${DTV.formatDate(p.startDate)} — ${DTV.formatDate(p.endDate)}</td>
+        <td>${DTV.tag(p.status)}</td>
+        <td class="actions">
+          <button class="btn btn-link btn-sm" onclick="openEdit('promotion')">Sửa</button>
+        </td>
+      </tr>`).join("");
+
+    function openAdd() {
+      openEdit(activeTab === "banners" ? "banner" : activeTab === "promotions" ? "promotion" : "collection");
+    }
+
+    function openEdit(type) {
+      const titles = { banner: "Banner trang", collection: "Bộ sưu tập", promotion: "Khuyến mãi" };
+      document.getElementById("drawerCmsTitle").textContent = "Thêm / Sửa " + titles[type];
+      const forms = {
+        banner: `<div class="form-group"><label class="form-label">Tiêu đề</label><input class="form-control"></div>
+          <div class="form-group"><label class="form-label">Vị trí</label><select class="form-control"><option>Hero trang chủ</option><option>Phụ trang chủ</option><option>Banner bộ sưu tập</option></select></div>
+          <div class="form-row cols-2"><div class="form-group"><label class="form-label">Từ ngày</label><input type="date" class="form-control"></div><div class="form-group"><label class="form-label">Đến ngày</label><input type="date" class="form-control"></div></div>
+          <div class="form-group"><label class="form-label">Hình ảnh</label><button class="btn btn-dashed" style="width:100%">+ Tải ảnh banner</button></div>`,
+        collection: `<div class="form-group"><label class="form-label">Bộ sưu tập</label><select class="form-control">${DTV.collections.map(c => `<option>${c.name}</option>`).join("")}</select></div>
+          <div class="form-group"><label class="form-label"><input type="checkbox" checked> Hiển thị nổi bật</label></div>`,
+        promotion: `<div class="form-group"><label class="form-label">Tên chương trình</label><input class="form-control"></div>
+          <div class="form-group"><label class="form-label">Loại</label><select class="form-control"><option value="discount">Giảm giá</option><option value="gift">Quà tặng</option><option value="shipping">Miễn phí ship</option></select></div>
+          <div class="form-row cols-2"><div class="form-group"><label class="form-label">Từ ngày</label><input type="date" class="form-control"></div><div class="form-group"><label class="form-label">Đến ngày</label><input type="date" class="form-control"></div></div>`,
+      };
+      document.getElementById("drawerCmsBody").innerHTML = forms[type];
+      DTV.openDrawer("drawerCms");
+    }
+
+    DTV.initTabs("#cmsTabs");
+    document.querySelectorAll("#cmsTabs .tab-item").forEach(tab => {
+      tab.addEventListener("click", () => { activeTab = tab.dataset.tab; });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Người dùng — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Người dùng</h1>
+        <p class="page-desc">Quản lý tài khoản nhân viên hệ thống</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerUser')">+ Thêm người dùng</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filter-panel">
+        <div class="filter-item">
+          <label>Tìm kiếm</label>
+          <input class="form-control" id="searchInput" placeholder="Tên, email..." style="width:200px">
+        </div>
+        <div class="filter-item">
+          <label>Vai trò</label>
+          <select class="form-control" id="filterRole">
+            <option value="">Tất cả</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Trạng thái</label>
+          <select class="form-control" id="filterStatus">
+            <option value="">Tất cả</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Ngưng</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="renderTable()">Lọc</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Người dùng</th>
+              <th>Email</th>
+              <th>SĐT</th>
+              <th>Vai trò</th>
+              <th>Đăng nhập gần nhất</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="userTable"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerUser">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Thêm người dùng</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerUser')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Họ tên</label><input class="form-control"></div>
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Email</label><input class="form-control" type="email"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label">Số điện thoại</label><input class="form-control"></div>
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Vai trò</label>
+          <select class="form-control" id="userRoleSelect"></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="required">*</span>Mật khẩu</label><input class="form-control" type="password"></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerUser')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerUser');DTV.toast('Thành công','Đã thêm người dùng')">Lưu</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "users", breadcrumb: [{ label: "Người dùng" }], title: "Người dùng" });
+    document.querySelector("#drawerUser .modal-close").innerHTML = DTV.ICONS.close;
+
+    const roles = [...new Set(DTV.users.map(u => u.role))];
+    document.getElementById("filterRole").innerHTML += roles.map(r => `<option>${r}</option>`).join("");
+    document.getElementById("userRoleSelect").innerHTML = DTV.roles.map(r => `<option>${r.name}</option>`).join("");
+
+    function getFiltered() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const role = document.getElementById("filterRole").value;
+      const status = document.getElementById("filterStatus").value;
+      return DTV.users.filter(u => {
+        if (q && !(u.name + u.email).toLowerCase().includes(q)) return false;
+        if (role && u.role !== role) return false;
+        if (status && u.status !== status) return false;
+        return true;
+      });
+    }
+
+    function renderTable() {
+      const data = getFiltered();
+      document.getElementById("userTable").innerHTML = data.map(u => `
+        <tr>
+          <td class="cell-muted">${u.id}</td>
+          <td>
+            <div class="flex gap-8" style="align-items:center">
+              <div class="avatar">${DTV.initials(u.name)}</div>
+              <span class="fw-500">${u.name}</span>
+            </div>
+          </td>
+          <td>${u.email}</td>
+          <td>${u.phone}</td>
+          <td><span class="tag tag-default">${u.role}</span></td>
+          <td class="cell-muted" style="font-size:12px">${DTV.formatDateTime(u.lastLogin)}</td>
+          <td>${DTV.tag(u.status)}</td>
+          <td class="actions">
+            <button class="btn btn-link btn-sm" onclick="DTV.openDrawer('drawerUser')">Sửa</button>
+            <button class="btn btn-link btn-sm" onclick="DTV.toast('Đặt lại MK','Email hướng dẫn đã gửi','info')">Đặt lại MK</button>
+          </td>
+        </tr>`).join("");
+      DTV.renderPagination("pagination", data.length);
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+    renderTable();
+  </script>
+</body>
+</html>

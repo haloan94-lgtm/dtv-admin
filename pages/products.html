@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sản phẩm — Đô Thị Vàng</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={corePlugins:{preflight:false}}</script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+</head>
+<body>
+  <div id="page-root" style="display:none">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Sản phẩm</h1>
+        <p class="page-desc">Quản lý danh mục sản phẩm trang sức vàng bán sỉ</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-default" onclick="DTV.toast('Xuất Excel','Đang tải file...','info')">Xuất Excel</button>
+        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerProduct')">+ Thêm sản phẩm</button>
+      </div>
+    </div>
+
+    <div class="grid grid-4 mb-24" id="statRow"></div>
+
+    <div class="card">
+      <div class="filter-panel">
+        <div class="filter-item">
+          <label>Tìm kiếm</label>
+          <input class="form-control" id="searchInput" placeholder="SKU, tên sản phẩm..." style="width:220px">
+        </div>
+        <div class="filter-item">
+          <label>Danh mục</label>
+          <select class="form-control" id="filterCategory"><option value="">Tất cả</option></select>
+        </div>
+        <div class="filter-item">
+          <label>Loại vàng</label>
+          <select class="form-control" id="filterGold">
+            <option value="">Tất cả</option>
+            <option>24K</option><option>18K</option><option>999.9</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Trạng thái</label>
+          <select class="form-control" id="filterStatus">
+            <option value="">Tất cả</option>
+            <option value="active">Hoạt động</option>
+            <option value="low_stock">Sắp hết</option>
+            <option value="out_of_stock">Hết hàng</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="renderTable()">Lọc</button>
+        <button class="btn btn-default" onclick="resetFilter()">Đặt lại</button>
+      </div>
+      <div class="card-header" style="border-top:1px solid var(--border);padding:12px 24px">
+        <span class="cell-muted" id="selectedCount">0 sản phẩm được chọn</span>
+        <div class="flex gap-8">
+          <button class="btn btn-default btn-sm" onclick="bulkAction('active')">Kích hoạt</button>
+          <button class="btn btn-default btn-sm" onclick="bulkAction('inactive')">Ngưng bán</button>
+          <button class="btn btn-danger btn-sm" onclick="bulkAction('delete')">Xóa</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:40px"><input type="checkbox" id="checkAll" onchange="toggleAll(this)"></th>
+              <th>SKU</th>
+              <th>Sản phẩm</th>
+              <th>Danh mục</th>
+              <th>Loại vàng</th>
+              <th>Trọng lượng</th>
+              <th>Giá bán</th>
+              <th>Tồn kho</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="productTable"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <div class="drawer" id="drawerProduct">
+    <div class="drawer-header">
+      <h3 class="drawer-title">Thêm sản phẩm mới</h3>
+      <button class="modal-close" onclick="DTV.closeDrawer('drawerProduct')">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label"><span class="required">*</span>SKU</label><input class="form-control" placeholder="VD: NC-24K-016"></div>
+        <div class="form-group"><label class="form-label"><span class="required">*</span>Tên sản phẩm</label><input class="form-control"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label">Danh mục</label>
+          <select class="form-control" id="drawerCategory"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Bộ sưu tập</label>
+          <select class="form-control"><option>—</option></select>
+        </div>
+      </div>
+      <div class="form-row cols-3">
+        <div class="form-group"><label class="form-label">Loại vàng</label>
+          <select class="form-control"><option>24K</option><option>18K</option><option>999.9</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Màu vàng</label>
+          <select class="form-control"><option>Vàng</option><option>Vàng trắng</option><option>Vàng hồng</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Trọng lượng (chỉ)</label><input class="form-control" type="number" step="0.1"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="form-label">Giá bán (VND)</label><input class="form-control" type="number"></div>
+        <div class="form-group"><label class="form-label">Tồn kho</label><input class="form-control" type="number"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Mô tả</label><textarea class="form-control" rows="3"></textarea></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerProduct')">Hủy</button>
+      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerProduct');DTV.toast('Thành công','Đã thêm sản phẩm mới')">Lưu</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    DTV.renderLayout({ active: "products", breadcrumb: [{ label: "Sản phẩm" }], title: "Sản phẩm" });
+    document.querySelector("#drawerProduct .modal-close").innerHTML = DTV.ICONS.close;
+
+    const cats = [...new Set(DTV.products.map(p => p.category))];
+    document.getElementById("filterCategory").innerHTML += cats.map(c => `<option>${c}</option>`).join("");
+    document.getElementById("drawerCategory").innerHTML = cats.map(c => `<option>${c}</option>`).join("");
+
+    const totalStock = DTV.products.reduce((s, p) => s + p.stock, 0);
+    const lowStock = DTV.products.filter(p => p.status === "low_stock" || p.status === "out_of_stock").length;
+    document.getElementById("statRow").innerHTML = [
+      { label: "Tổng sản phẩm", value: DTV.products.length },
+      { label: "Đang bán", value: DTV.products.filter(p => p.status === "active").length },
+      { label: "Tổng tồn kho", value: DTV.formatNumber(totalStock) + " sp" },
+      { label: "Cảnh báo tồn", value: lowStock, warn: true },
+    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.warn ? 'text-warning' : ''}" style="font-size:24px">${s.value}</div></div>`).join("");
+
+    function getFiltered() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      const cat = document.getElementById("filterCategory").value;
+      const gold = document.getElementById("filterGold").value;
+      const status = document.getElementById("filterStatus").value;
+      return DTV.products.filter(p => {
+        if (q && !(p.name + p.sku + p.id).toLowerCase().includes(q)) return false;
+        if (cat && p.category !== cat) return false;
+        if (gold && p.goldType !== gold) return false;
+        if (status && p.status !== status) return false;
+        return true;
+      });
+    }
+
+    function updateSelectedCount() {
+      const n = document.querySelectorAll(".row-check:checked").length;
+      document.getElementById("selectedCount").textContent = n + " sản phẩm được chọn";
+    }
+
+    function toggleAll(el) {
+      document.querySelectorAll(".row-check").forEach(c => c.checked = el.checked);
+      updateSelectedCount();
+    }
+
+    function bulkAction(action) {
+      const n = document.querySelectorAll(".row-check:checked").length;
+      if (!n) { DTV.toast("Chú ý", "Vui lòng chọn ít nhất 1 sản phẩm", "warning"); return; }
+      const msgs = { active: "Đã kích hoạt " + n + " sản phẩm", inactive: "Đã ngưng bán " + n + " sản phẩm", delete: "Đã xóa " + n + " sản phẩm" };
+      DTV.toast("Thành công", msgs[action]);
+    }
+
+    function renderTable() {
+      const data = getFiltered();
+      document.getElementById("productTable").innerHTML = data.map(p => `
+        <tr>
+          <td><input type="checkbox" class="row-check" onchange="updateSelectedCount()"></td>
+          <td class="cell-muted">${p.sku}</td>
+          <td>
+            <div class="flex gap-8" style="align-items:center">
+              <div style="width:40px;height:40px;background:var(--gold-bg);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px">💍</div>
+              <div>
+                <a href="product-detail.html?id=${p.id}" class="fw-500" style="color:var(--text)">${p.name}</a>
+                <div class="cell-muted" style="font-size:12px">${p.collection !== "—" ? p.collection : ""}</div>
+              </div>
+            </div>
+          </td>
+          <td>${p.category}</td>
+          <td>${p.goldType} · ${p.goldColor}</td>
+          <td>${p.weight} chỉ</td>
+          <td class="cell-money">${DTV.formatMoney(p.price)}</td>
+          <td>${p.stock} <span class="cell-muted">(${p.reserved} giữ)</span></td>
+          <td>${DTV.tag(p.status)}</td>
+          <td class="actions">
+            <a class="btn btn-link btn-sm" href="product-detail.html?id=${p.id}">Chi tiết</a>
+            <button class="btn btn-link btn-sm" onclick="DTV.openDrawer('drawerProduct')">Sửa</button>
+          </td>
+        </tr>`).join("");
+      DTV.renderPagination("pagination", data.length);
+      document.getElementById("checkAll").checked = false;
+      updateSelectedCount();
+    }
+
+    function resetFilter() {
+      searchInput.value = ""; filterCategory.value = ""; filterGold.value = ""; filterStatus.value = "";
+      renderTable();
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+    renderTable();
+  </script>
+</body>
+</html>

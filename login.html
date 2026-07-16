@@ -22,7 +22,7 @@
 
         <div class="login-alert" id="loginAlert" hidden></div>
 
-        <form id="loginForm" autocomplete="on">
+        <form id="loginForm" autocomplete="on" action="index.html" method="get">
           <div class="form-group">
             <label class="form-label" for="username"
               ><span class="required">*</span>Tài khoản</label
@@ -50,7 +50,11 @@
               required
             />
           </div>
-          <button class="btn btn-primary btn-lg btn-block" type="submit" id="loginBtn">
+          <button
+            class="btn btn-primary btn-lg btn-block"
+            type="submit"
+            id="loginBtn"
+          >
             Đăng nhập
           </button>
         </form>
@@ -61,37 +65,84 @@
       </div>
     </div>
 
-    <script src="assets/js/auth.js"></script>
+    <!-- Auth inline: không phụ thuộc file ngoài (tránh lỗi deploy static.app) -->
     <script>
       (function () {
-        if (typeof DTV.isAuthenticated !== "function") {
-          document.getElementById("loginAlert").textContent =
-            "Không tải được auth.js. Kiểm tra đường dẫn assets/js/auth.js trên server.";
-          document.getElementById("loginAlert").hidden = false;
+        var AUTH_KEY = "dtv-admin-session";
+        var DEMO = { username: "admin", password: "admin" };
+
+        function getRoot() {
+          var path = location.pathname;
+          if (path.indexOf("/pages/") !== -1) {
+            return path.replace(/\/pages\/[^/]*$/, "/");
+          }
+          var i = path.lastIndexOf("/");
+          return i >= 0 ? path.slice(0, i + 1) : "/";
+        }
+
+        function getSession() {
+          try {
+            var raw = localStorage.getItem(AUTH_KEY);
+            return raw ? JSON.parse(raw) : null;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function isLoggedIn() {
+          var s = getSession();
+          return !!(s && s.username);
+        }
+
+        function goHome() {
+          var params = new URLSearchParams(location.search);
+          var next = params.get("next");
+          var safe =
+            next && next.charAt(0) === "/" && next.indexOf("//") !== 0
+              ? next
+              : null;
+          location.replace(safe || getRoot() + "index.html");
+        }
+
+        function doLogin(username, password) {
+          var u = String(username || "").replace(/^\s+|\s+$/g, "");
+          var p = String(password || "");
+          if (u === DEMO.username && p === DEMO.password) {
+            localStorage.setItem(
+              AUTH_KEY,
+              JSON.stringify({
+                username: u,
+                name: "Nguyễn Quản Trị",
+                role: "Quản trị viên",
+                at: Date.now(),
+              }),
+            );
+            return true;
+          }
+          return false;
+        }
+
+        if (isLoggedIn()) {
+          goHome();
           return;
         }
 
-        if (DTV.isAuthenticated()) {
-          DTV.redirectAfterLogin();
-          return;
-        }
-
-        const form = document.getElementById("loginForm");
-        const alertEl = document.getElementById("loginAlert");
-        const btn = document.getElementById("loginBtn");
+        var form = document.getElementById("loginForm");
+        var alertEl = document.getElementById("loginAlert");
+        var btn = document.getElementById("loginBtn");
 
         form.addEventListener("submit", function (e) {
           e.preventDefault();
           alertEl.hidden = true;
           btn.disabled = true;
 
-          const result = DTV.login(
-            document.getElementById("username").value,
-            document.getElementById("password").value,
-          );
-
-          if (!result.ok) {
-            alertEl.textContent = result.error;
+          if (
+            !doLogin(
+              document.getElementById("username").value,
+              document.getElementById("password").value,
+            )
+          ) {
+            alertEl.textContent = "Tài khoản hoặc mật khẩu không đúng.";
             alertEl.hidden = false;
             btn.disabled = false;
             document.getElementById("password").focus();
@@ -99,7 +150,7 @@
             return;
           }
 
-          DTV.redirectAfterLogin();
+          goHome();
         });
       })();
     </script>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng nhập — Đô Thị Vàng</title>
+    <link rel="stylesheet" href="assets/css/main.css" />
+  </head>
+  <body class="login-page">
+    <div class="login-shell">
+      <div class="login-card">
+        <div class="login-brand">
+          <div class="logo-mark">ĐV</div>
+          <div>
+            <div class="login-brand-name">Đô Thị Vàng</div>
+            <div class="login-brand-sub">Hệ thống quản trị</div>
+          </div>
+        </div>
+
+        <h1 class="login-title">Đăng nhập</h1>
+        <p class="login-desc">Nhập tài khoản quản trị để tiếp tục</p>
+
+        <div class="login-alert" id="loginAlert" hidden></div>
+
+        <form id="loginForm" autocomplete="on">
+          <div class="form-group">
+            <label class="form-label" for="username"
+              ><span class="required">*</span>Tài khoản</label
+            >
+            <input
+              class="form-control"
+              type="text"
+              id="username"
+              name="username"
+              placeholder="admin"
+              autofocus
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="password"
+              ><span class="required">*</span>Mật khẩu</label
+            >
+            <input
+              class="form-control"
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          <button class="btn btn-primary btn-lg btn-block" type="submit" id="loginBtn">
+            Đăng nhập
+          </button>
+        </form>
+
+        <p class="login-hint">
+          Demo: tài khoản <code>admin</code> / mật khẩu <code>admin</code>
+        </p>
+      </div>
+    </div>
+
+    <script src="assets/js/layout.js"></script>
+    <script>
+      (function () {
+        function redirectAfterLogin() {
+          const params = new URLSearchParams(location.search);
+          const next = params.get("next");
+          const safe =
+            next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+          location.replace(safe || "index.html");
+        }
+
+        if (DTV.isAuthenticated()) {
+          redirectAfterLogin();
+          return;
+        }
+
+        const form = document.getElementById("loginForm");
+        const alertEl = document.getElementById("loginAlert");
+        const btn = document.getElementById("loginBtn");
+
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          alertEl.hidden = true;
+          btn.disabled = true;
+
+          const result = DTV.login(
+            document.getElementById("username").value,
+            document.getElementById("password").value,
+          );
+
+          if (!result.ok) {
+            alertEl.textContent = result.error;
+            alertEl.hidden = false;
+            btn.disabled = false;
+            document.getElementById("password").focus();
+            document.getElementById("password").select();
+            return;
+          }
+
+          redirectAfterLogin();
+        });
+      })();
+    </script>
+  </body>
+</html>

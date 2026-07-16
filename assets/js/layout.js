@@ -1,6 +1,57 @@
 /* Đô Thị Vàng — Layout (Sidebar + Header) */
 window.DTV = window.DTV || {};
 
+/* ========== Auth (mock) ========== */
+DTV.AUTH_KEY = "dtv-admin-session";
+DTV.DEMO_USER = { username: "admin", password: "admin" };
+
+DTV.isLoginPage = () => /\/login\.html?$/i.test(location.pathname);
+
+DTV.getSession = () => {
+  try {
+    const raw = localStorage.getItem(DTV.AUTH_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+DTV.isAuthenticated = () => {
+  const s = DTV.getSession();
+  return !!(s && s.username);
+};
+
+DTV.login = (username, password) => {
+  const u = String(username || "").trim();
+  const p = String(password || "");
+  if (u === DTV.DEMO_USER.username && p === DTV.DEMO_USER.password) {
+    const session = {
+      username: u,
+      name: "Nguyễn Quản Trị",
+      role: "Quản trị viên",
+      at: Date.now(),
+    };
+    localStorage.setItem(DTV.AUTH_KEY, JSON.stringify(session));
+    return { ok: true, session };
+  }
+  return { ok: false, error: "Tài khoản hoặc mật khẩu không đúng." };
+};
+
+DTV.logout = () => {
+  localStorage.removeItem(DTV.AUTH_KEY);
+  location.href = DTV.getAppRoot() + "login.html";
+};
+
+DTV.requireAuth = () => {
+  if (DTV.isLoginPage()) return true;
+  if (DTV.isAuthenticated()) return true;
+  const next = encodeURIComponent(
+    location.pathname + location.search + location.hash,
+  );
+  location.replace(DTV.getAppRoot() + "login.html?next=" + next);
+  return false;
+};
+
 DTV.ICONS = {
   dashboard:
     '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
@@ -210,6 +261,7 @@ DTV.resolveHref = (href) => {
   if (path.startsWith("./")) path = path.replace(/^\.\//, "");
 
   if (path === "index.html") return root + "index.html" + query;
+  if (path === "login.html") return root + "login.html" + query;
   if (path.startsWith("pages/")) return root + path + query;
   // Bare filename → pages/
   if (!path.includes("/")) return root + "pages/" + path + query;
@@ -291,11 +343,13 @@ DTV.bindShellEvents = () => {
     const logout = e.target.closest('[data-menu="logout"]');
     if (!logout) return;
     e.preventDefault();
-    DTV.toast("Đăng xuất", "Bạn đã đăng xuất khỏi hệ thống.", "info");
+    DTV.logout();
   });
 };
 
 DTV.renderLayout = (options = {}) => {
+  if (!DTV.requireAuth()) return;
+
   // SPA: shell already exists — only update chrome
   if (document.getElementById("sidebar")) {
     DTV.updateShell(options);
@@ -304,6 +358,16 @@ DTV.renderLayout = (options = {}) => {
 
   const { active = "dashboard", breadcrumb = [], title } = options;
   const collapsed = localStorage.getItem("dtv-sidebar-collapsed") === "1";
+  const session = DTV.getSession();
+  const userName = session?.name || "Nguyễn Quản Trị";
+  const userRole = session?.role || "Quản trị viên";
+  const userInitials = userName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(-2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
 
   let menuHtml = "";
   DTV.MENU.forEach((group) => {
@@ -344,10 +408,10 @@ DTV.renderLayout = (options = {}) => {
               <span class="badge-dot"></span>
             </button>
             <div class="user-profile" title="Hồ sơ">
-              <div class="user-avatar">QT</div>
+              <div class="user-avatar">${userInitials}</div>
               <div>
-                <div class="user-name">Nguyễn Quản Trị</div>
-                <div class="user-role">Quản trị viên</div>
+                <div class="user-name">${userName}</div>
+                <div class="user-role">${userRole}</div>
               </div>
             </div>
           </div>
@@ -746,6 +810,7 @@ DTV.navigate = async (url, { replace = false, skipHistory = false } = {}) => {
 
 DTV.initRouter = () => {
   if (DTV._routerReady) return;
+  if (DTV.isLoginPage()) return;
   DTV._routerReady = true;
 
   document.addEventListener("click", (e) => {

@@ -53,7 +53,7 @@
     if (u === DTV.DEMO_USER.username && p === DTV.DEMO_USER.password) {
       const session = {
         username: u,
-        name: "Nguyễn Quản Trị",
+        name: "Admin",
         role: "Quản trị viên",
         at: Date.now(),
       };

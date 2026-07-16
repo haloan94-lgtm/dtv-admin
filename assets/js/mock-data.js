@@ -1397,7 +1397,7 @@ DTV.promotions = [
 DTV.users = [
   {
     id: "U001",
-    name: "Nguyễn Quản Trị",
+    name: "Admin",
     email: "admin@dothivang.vn",
     phone: "0901111111",
     role: "Quản trị viên",
@@ -1524,7 +1524,7 @@ DTV.roles = [
 DTV.auditLogs = [
   {
     id: "AL001",
-    user: "Nguyễn Quản Trị",
+    user: "Admin",
     action: "Cập nhật giá vàng",
     detail: "Giá mua: 8.950.000 → 8.950.000",
     time: "2026-07-16T08:30:00",
@@ -1616,7 +1616,7 @@ DTV.activities = [
     type: "cms",
   },
   {
-    user: "Nguyễn Quản Trị",
+    user: "Admin",
     action: "phê duyệt đơn hàng",
     target: "DH-2026-0847",
     time: "Hôm qua",

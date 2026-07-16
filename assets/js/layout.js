@@ -323,7 +323,7 @@ DTV.renderLayout = (options = {}) => {
   const { active = "dashboard", breadcrumb = [], title } = options;
   const collapsed = localStorage.getItem("dtv-sidebar-collapsed") === "1";
   const session = DTV.getSession();
-  const userName = session?.name || "Nguyễn Quản Trị";
+  const userName = session?.name || "Admin";
   const userRole = session?.role || "Quản trị viên";
   const userInitials = userName
     .split(/\s+/)

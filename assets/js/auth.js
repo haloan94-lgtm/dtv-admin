@@ -9,20 +9,35 @@
     return /\/login(?:\.html)?$/i.test(location.pathname);
   };
 
+  /** App root path always ends with / e.g. / or /dtv-admin/ */
   DTV.getAppRoot = function () {
     const path = location.pathname;
-    if (path.includes("/pages/")) {
-      return path.replace(/\/pages\/[^/]*$/, "/");
+    const pagesIdx = path.indexOf("/pages/");
+    if (pagesIdx !== -1) {
+      return path.slice(0, pagesIdx) + "/";
     }
+    // /login.html or /index.html → directory containing the file
     const lastSlash = path.lastIndexOf("/");
     return lastSlash >= 0 ? path.slice(0, lastSlash + 1) : "/";
+  };
+
+  DTV.absoluteUrl = function (relativePath) {
+    return new URL(relativePath, location.origin + DTV.getAppRoot()).href;
+  };
+
+  DTV.hardRedirect = function (url) {
+    try {
+      (window.top || window).location.replace(url);
+    } catch (e) {
+      location.replace(url);
+    }
   };
 
   DTV.getSession = function () {
     try {
       const raw = localStorage.getItem(DTV.AUTH_KEY);
       return raw ? JSON.parse(raw) : null;
-    } catch {
+    } catch (e) {
       return null;
     }
   };
@@ -49,8 +64,11 @@
   };
 
   DTV.logout = function () {
-    localStorage.removeItem(DTV.AUTH_KEY);
-    location.href = DTV.getAppRoot() + "login.html";
+    try {
+      localStorage.removeItem(DTV.AUTH_KEY);
+    } catch (e) {}
+    // Hard navigation — không dùng SPA, tránh CSS/login lệch path trên static.app
+    DTV.hardRedirect(DTV.absoluteUrl("login.html"));
   };
 
   DTV.requireAuth = function () {
@@ -59,7 +77,7 @@
     const next = encodeURIComponent(
       location.pathname + location.search + location.hash,
     );
-    location.replace(DTV.getAppRoot() + "login.html?next=" + next);
+    DTV.hardRedirect(DTV.absoluteUrl("login.html") + "?next=" + next);
     return false;
   };
 
@@ -68,6 +86,6 @@
     const next = params.get("next");
     const safe =
       next && next.startsWith("/") && !next.startsWith("//") ? next : null;
-    location.replace(safe || DTV.getAppRoot() + "index.html");
+    DTV.hardRedirect(safe || DTV.absoluteUrl("index.html"));
   };
 })(window);

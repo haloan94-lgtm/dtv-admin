@@ -178,10 +178,10 @@ DTV.MENU = [
 
 DTV.getAppRoot = () => {
   const path = window.location.pathname;
-  if (path.includes("/pages/")) {
-    return path.replace(/\/pages\/[^/]*$/, "/");
+  const pagesIdx = path.indexOf("/pages/");
+  if (pagesIdx !== -1) {
+    return path.slice(0, pagesIdx) + "/";
   }
-  // directory containing the current html file
   const lastSlash = path.lastIndexOf("/");
   return lastSlash >= 0 ? path.slice(0, lastSlash + 1) : "/";
 };
@@ -292,7 +292,22 @@ DTV.bindShellEvents = () => {
     const logout = e.target.closest('[data-menu="logout"]');
     if (!logout) return;
     e.preventDefault();
-    DTV.logout();
+    e.stopPropagation();
+    if (typeof DTV.logout === "function") {
+      DTV.logout();
+      return;
+    }
+    try {
+      localStorage.removeItem(DTV.AUTH_KEY || "dtv-admin-session");
+    } catch (_) {}
+    const root =
+      typeof DTV.getAppRoot === "function" ? DTV.getAppRoot() : "/";
+    const url = new URL("login.html", location.origin + root).href;
+    try {
+      (window.top || window).location.replace(url);
+    } catch (_) {
+      location.replace(url);
+    }
   });
 };
 
@@ -526,6 +541,8 @@ DTV.isInternalUrl = (url) => {
   try {
     const u = new URL(url, location.href);
     if (u.origin !== location.origin) return false;
+    // Login always full-page — never SPA
+    if (/\/login(?:\.html)?$/i.test(u.pathname)) return false;
     const root = DTV.getAppRoot();
     if (!u.pathname.startsWith(root)) return false;
     return /\.html?$/i.test(u.pathname) || u.pathname === root;
@@ -682,6 +699,12 @@ DTV.loadPageDocument = async (url) => {
 DTV.navigate = async (url, { replace = false, skipHistory = false } = {}) => {
   const target = new URL(url, location.href);
   const current = new URL(location.href);
+
+  // Login must always be a full document load
+  if (/\/login(?:\.html)?$/i.test(target.pathname)) {
+    location.replace(target.href);
+    return;
+  }
 
   // Same page (ignore hash-only)
   if (

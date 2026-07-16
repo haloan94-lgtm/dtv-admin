@@ -4,13 +4,85 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta name="dtv-login-build" content="20260716-inline-v2" />
+    <meta name="dtv-login-build" content="20260716-inline-v3" />
     <title>Đăng nhập — Đô Thị Vàng</title>
-    <link rel="stylesheet" href="assets/css/main.css" />
+    <!-- CSS tự chứa: không phụ thuộc path assets trên static.app -->
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      html { font-size: 14px; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: rgba(0, 0, 0, 0.88);
+        background: #f5f5f5;
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.5715;
+      }
+      .login-page {
+        min-height: 100vh;
+        background:
+          radial-gradient(ellipse 80% 60% at 20% 10%, rgba(201, 162, 39, 0.12), transparent 55%),
+          radial-gradient(ellipse 70% 50% at 90% 90%, rgba(0, 0, 0, 0.04), transparent 50%),
+          #f5f5f5;
+      }
+      .login-shell {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .login-card {
+        width: 100%;
+        max-width: 400px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12);
+        border: 1px solid #f0f0f0;
+        padding: 36px 32px 28px;
+      }
+      .login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+      .logo-mark {
+        width: 40px; height: 40px; border-radius: 8px;
+        background: #c9a227; color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 14px; flex-shrink: 0;
+      }
+      .login-brand-name { font-size: 16px; font-weight: 600; line-height: 1.3; }
+      .login-brand-sub { font-size: 12px; color: rgba(0, 0, 0, 0.45); }
+      .login-title { margin: 0 0 4px; font-size: 22px; font-weight: 600; line-height: 1.3; }
+      .login-desc { margin: 0 0 24px; font-size: 14px; color: rgba(0, 0, 0, 0.65); }
+      .login-alert {
+        margin-bottom: 16px; padding: 10px 12px; border-radius: 6px;
+        background: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; font-size: 13px;
+      }
+      .form-group { margin-bottom: 20px; }
+      .form-label { display: block; margin-bottom: 6px; font-size: 14px; }
+      .form-label .required { color: #ff4d4f; margin-right: 4px; }
+      .form-control {
+        width: 100%; height: 40px; padding: 4px 11px;
+        font-size: 14px; border: 1px solid #d9d9d9; border-radius: 6px;
+        outline: none; transition: border-color 0.2s;
+      }
+      .form-control:focus { border-color: #c9a227; box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.15); }
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        height: 40px; padding: 0 20px; font-size: 16px;
+        border-radius: 6px; border: 1px solid transparent; cursor: pointer;
+        width: 100%; margin-top: 4px;
+      }
+      .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .btn-primary { background: #c9a227; color: #fff; border-color: #c9a227; }
+      .btn-primary:hover:not(:disabled) { background: #b8911f; }
+      .login-hint { margin: 20px 0 0; text-align: center; font-size: 12px; color: rgba(0, 0, 0, 0.45); }
+      .login-hint code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px; padding: 1px 5px; background: #f5f5f5; border-radius: 3px;
+      }
+    </style>
   </head>
-  <!-- build:20260716-inline-v2 — nếu View Source không thấy dòng này thì static.app chưa deploy -->
-  <body class="login-page" data-login-build="20260716-inline-v2">
+  <!-- build:20260716-inline-v3 -->
+  <body class="login-page" data-login-build="20260716-inline-v3">
     <div class="login-shell">
       <div class="login-card">
         <div class="login-brand">
@@ -54,11 +126,7 @@
               required
             />
           </div>
-          <button
-            class="btn btn-primary btn-lg btn-block"
-            type="submit"
-            id="loginBtn"
-          >
+          <button class="btn btn-primary" type="submit" id="loginBtn">
             Đăng nhập
           </button>
         </form>
@@ -69,7 +137,6 @@
       </div>
     </div>
 
-    <!-- Auth inline: không phụ thuộc file ngoài (tránh lỗi deploy static.app) -->
     <script>
       (function () {
         var AUTH_KEY = "dtv-admin-session";
@@ -77,11 +144,22 @@
 
         function getRoot() {
           var path = location.pathname;
-          if (path.indexOf("/pages/") !== -1) {
-            return path.replace(/\/pages\/[^/]*$/, "/");
-          }
+          var pagesIdx = path.indexOf("/pages/");
+          if (pagesIdx !== -1) return path.slice(0, pagesIdx) + "/";
           var i = path.lastIndexOf("/");
           return i >= 0 ? path.slice(0, i + 1) : "/";
+        }
+
+        function abs(rel) {
+          return new URL(rel, location.origin + getRoot()).href;
+        }
+
+        function hardGo(url) {
+          try {
+            (window.top || window).location.replace(url);
+          } catch (e) {
+            location.replace(url);
+          }
         }
 
         function getSession() {
@@ -93,11 +171,6 @@
           }
         }
 
-        function isLoggedIn() {
-          var s = getSession();
-          return !!(s && s.username);
-        }
-
         function goHome() {
           var params = new URLSearchParams(location.search);
           var next = params.get("next");
@@ -105,7 +178,7 @@
             next && next.charAt(0) === "/" && next.indexOf("//") !== 0
               ? next
               : null;
-          location.replace(safe || getRoot() + "index.html");
+          hardGo(safe || abs("index.html"));
         }
 
         function doLogin(username, password) {
@@ -126,7 +199,7 @@
           return false;
         }
 
-        if (isLoggedIn()) {
+        if (getSession() && getSession().username) {
           goHome();
           return;
         }

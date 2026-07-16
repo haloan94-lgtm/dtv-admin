@@ -1,114 +1,192 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đơn hàng — Đô Thị Vàng</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config={corePlugins:{preflight:false}}</script>
-  <link rel="stylesheet" href="../assets/css/main.css">
-</head>
-<body>
-  <div id="page-root" style="display:none">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Đơn hàng</h1>
-        <p class="page-desc">Quản lý đơn hàng B2B từ đại lý</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đơn hàng — Đô Thị Vàng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { corePlugins: { preflight: false } };
+    </script>
+    <link rel="stylesheet" href="../assets/css/main.css" />
+  </head>
+  <body>
+    <div id="page-root" style="display: none">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Đơn hàng</h1>
+          <p class="page-desc">Quản lý đơn hàng B2B — tự tạo lệnh sản xuất khi duyệt</p>
+        </div>
+        <div class="page-actions">
+          <button
+            class="btn btn-default"
+            onclick="DTV.toast('Xuất Excel', 'Đang tải file...', 'info')"
+          >
+            Xuất Excel
+          </button>
+          <button
+            class="btn btn-primary"
+            onclick="
+              DTV.toast('Tạo đơn', 'Chuyển sang form tạo đơn mới', 'info')
+            "
+          >
+            + Tạo đơn hàng
+          </button>
+        </div>
       </div>
-      <div class="page-actions">
-        <button class="btn btn-default" onclick="DTV.toast('Xuất Excel','Đang tải file...','info')">Xuất Excel</button>
-        <button class="btn btn-primary" onclick="DTV.toast('Tạo đơn','Chuyển sang form tạo đơn mới','info')">+ Tạo đơn hàng</button>
+
+      <div class="loop-story">
+        <div class="loop-step">
+          <span class="loop-num">1 · Đại lý</span>
+          <h4>Đặt đơn trên portal</h4>
+          <p>Đại lý chọn sản phẩm và biến thể, giá đã tính theo hạng.</p>
+        </div>
+        <div class="loop-step">
+          <span class="loop-num">2 · Hệ thống</span>
+          <h4>Tự tạo lệnh sản xuất</h4>
+          <p>Mỗi dòng đơn sinh lệnh sản xuất tương ứng.</p>
+        </div>
+        <div class="loop-step">
+          <span class="loop-num">3 · Vận hành</span>
+          <h4>Theo dõi trạng thái</h4>
+          <p>Đại lý và nội bộ cùng theo dõi tiến độ đơn hàng.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-4 mb-24" id="statRow"></div>
+
+      <div class="card">
+        <div class="filter-panel">
+          <div class="filter-item">
+            <label>Tìm kiếm</label>
+            <input
+              class="form-control"
+              id="searchInput"
+              placeholder="Mã đơn, khách hàng..."
+              style="width: 200px"
+            />
+          </div>
+          <div class="filter-item">
+            <label>Trạng thái</label>
+            <select class="form-control" id="filterStatus">
+              <option value="">Tất cả</option>
+              <option value="pending">Chờ duyệt</option>
+              <option value="producing">Đang SX</option>
+              <option value="shipping">Đang giao</option>
+              <option value="completed">Hoàn thành</option>
+              <option value="cancelled">Đã hủy</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Thanh toán</label>
+            <select class="form-control" id="filterPayment">
+              <option value="">Tất cả</option>
+              <option value="paid">Đã thanh toán</option>
+              <option value="partial">TT một phần</option>
+              <option value="unpaid">Chưa TT</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Từ ngày</label>
+            <input
+              class="form-control"
+              type="date"
+              id="filterFrom"
+              value="2026-07-01"
+            />
+          </div>
+          <button class="btn btn-primary" onclick="renderTable()">Lọc</button>
+          <button class="btn btn-default" onclick="resetFilter()">
+            Đặt lại
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Ngày tạo</th>
+                <th>SP</th>
+                <th>Tổng tiền</th>
+                <th>Đã TT</th>
+                <th>Công nợ</th>
+                <th>Thanh toán</th>
+                <th>Trạng thái</th>
+                <th>Lệnh SX</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="orderTable"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
       </div>
     </div>
 
-    <div class="grid grid-4 mb-24" id="statRow"></div>
-
-    <div class="card">
-      <div class="filter-panel">
-        <div class="filter-item">
-          <label>Tìm kiếm</label>
-          <input class="form-control" id="searchInput" placeholder="Mã đơn, khách hàng..." style="width:200px">
-        </div>
-        <div class="filter-item">
-          <label>Trạng thái</label>
-          <select class="form-control" id="filterStatus">
-            <option value="">Tất cả</option>
-            <option value="pending">Chờ duyệt</option>
-            <option value="producing">Đang SX</option>
-            <option value="shipping">Đang giao</option>
-            <option value="completed">Hoàn thành</option>
-            <option value="cancelled">Đã hủy</option>
-          </select>
-        </div>
-        <div class="filter-item">
-          <label>Thanh toán</label>
-          <select class="form-control" id="filterPayment">
-            <option value="">Tất cả</option>
-            <option value="paid">Đã thanh toán</option>
-            <option value="partial">TT một phần</option>
-            <option value="unpaid">Chưa TT</option>
-          </select>
-        </div>
-        <div class="filter-item">
-          <label>Từ ngày</label>
-          <input class="form-control" type="date" id="filterFrom" value="2026-07-01">
-        </div>
-        <button class="btn btn-primary" onclick="renderTable()">Lọc</button>
-        <button class="btn btn-default" onclick="resetFilter()">Đặt lại</button>
-      </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Mã đơn</th>
-              <th>Khách hàng</th>
-              <th>Ngày tạo</th>
-              <th>SP</th>
-              <th>Tổng tiền</th>
-              <th>Đã TT</th>
-              <th>Công nợ</th>
-              <th>Thanh toán</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody id="orderTable"></tbody>
-        </table>
-      </div>
-      <div class="pagination" id="pagination"></div>
-    </div>
-  </div>
-
-  <script src="../assets/js/mock-data.js"></script>
-  <script src="../assets/js/layout.js"></script>
-  <script>
-    DTV.renderLayout({ active: "orders", breadcrumb: [{ label: "Đơn hàng" }], title: "Đơn hàng" });
-
-    document.getElementById("statRow").innerHTML = [
-      { label: "Chờ duyệt", value: DTV.orders.filter(o => o.status === "pending").length, cls: "text-warning" },
-      { label: "Đang SX", value: DTV.orders.filter(o => o.status === "producing").length, cls: "text-processing" },
-      { label: "Đang giao", value: DTV.orders.filter(o => o.status === "shipping").length, cls: "" },
-      { label: "Hoàn thành", value: DTV.orders.filter(o => o.status === "completed").length, cls: "text-success" },
-    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.cls}" style="font-size:28px">${s.value}</div></div>`).join("");
-
-    function getFiltered() {
-      const q = document.getElementById("searchInput").value.toLowerCase();
-      const status = document.getElementById("filterStatus").value;
-      const payment = document.getElementById("filterPayment").value;
-      const from = document.getElementById("filterFrom").value;
-      return DTV.orders.filter(o => {
-        if (q && !(o.id + o.customer).toLowerCase().includes(q)) return false;
-        if (status && o.status !== status) return false;
-        if (payment && o.payment !== payment) return false;
-        if (from && new Date(o.createdAt) < new Date(from)) return false;
-        return true;
+    <script src="../assets/js/mock-data.js"></script>
+    <script src="../assets/js/layout.js"></script>
+    <script>
+      DTV.renderLayout({
+        active: "orders",
+        breadcrumb: [{ label: "Đơn hàng" }],
+        title: "Đơn hàng",
       });
-    }
 
-    function renderTable() {
-      const data = getFiltered();
-      document.getElementById("orderTable").innerHTML = data.map(o => `
-        <tr>
+      document.getElementById("statRow").innerHTML = [
+        {
+          label: "Chờ duyệt",
+          value: DTV.orders.filter((o) => o.status === "pending").length,
+          cls: "text-warning",
+        },
+        {
+          label: "Đang SX",
+          value: DTV.orders.filter((o) => o.status === "producing").length,
+          cls: "text-processing",
+        },
+        {
+          label: "Đang giao",
+          value: DTV.orders.filter((o) => o.status === "shipping").length,
+          cls: "",
+        },
+        {
+          label: "Hoàn thành",
+          value: DTV.orders.filter((o) => o.status === "completed").length,
+          cls: "text-success",
+        },
+      ]
+        .map(
+          (s) =>
+            `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.cls}" style="font-size:28px">${s.value}</div></div>`,
+        )
+        .join("");
+
+      function getFiltered() {
+        const q = document.getElementById("searchInput").value.toLowerCase();
+        const status = document.getElementById("filterStatus").value;
+        const payment = document.getElementById("filterPayment").value;
+        const from = document.getElementById("filterFrom").value;
+        return DTV.orders.filter((o) => {
+          if (q && !(o.id + o.customer).toLowerCase().includes(q)) return false;
+          if (status && o.status !== status) return false;
+          if (payment && o.payment !== payment) return false;
+          if (from && new Date(o.createdAt) < new Date(from)) return false;
+          return true;
+        });
+      }
+
+      function renderTable() {
+        const data = getFiltered();
+        document.getElementById("orderTable").innerHTML = data
+          .map((o) => {
+            const sx = DTV.production.filter((p) => p.orderId === o.id);
+            const sxLabel = sx.length
+              ? `<a href="production.html?order=${o.id}" class="fw-500">${sx.map((p) => p.id).join(", ")}</a>`
+              : o.status === "pending"
+                ? `<span class="cell-muted">Chờ duyệt → tự tạo</span>`
+                : `<span class="cell-muted">—</span>`;
+            return `
+        <tr ${o.id === "DH-2026-0847" ? 'style="background:#fffbe6"' : ""}>
           <td><a href="order-detail.html?id=${o.id}" class="fw-500">${o.id}</a></td>
           <td>
             <div>${o.customer}</div>
@@ -118,24 +196,32 @@
           <td>${o.items}</td>
           <td class="cell-money">${DTV.formatMoney(o.total)}</td>
           <td class="cell-money">${DTV.formatMoney(o.paid)}</td>
-          <td class="cell-money ${o.debt > 0 ? 'text-error' : ''}">${DTV.formatMoney(o.debt)}</td>
+          <td class="cell-money ${o.debt > 0 ? "text-error" : ""}">${DTV.formatMoney(o.debt)}</td>
           <td>${DTV.tag(o.payment)}</td>
           <td>${DTV.tag(o.status)}</td>
+          <td>${sxLabel}</td>
           <td class="actions">
             <a class="btn btn-link btn-sm" href="order-detail.html?id=${o.id}">Chi tiết</a>
-            ${o.status === "pending" ? '<button class="btn btn-link btn-sm" onclick="DTV.toast(\'Đã duyệt\',\'Đơn ' + o.id + ' đã được phê duyệt\')">Duyệt</button>' : ""}
+            ${o.status === "pending" ? "<button class=\"btn btn-link btn-sm\" onclick=\"DTV.toast('Đã duyệt','Đơn " + o.id + " đã được phê duyệt · lệnh SX sẽ được tạo')\">Duyệt</button>" : ""}
           </td>
-        </tr>`).join("");
-      DTV.renderPagination("pagination", data.length);
-    }
+        </tr>`;
+          })
+          .join("");
+        DTV.renderPagination("pagination", data.length);
+      }
 
-    function resetFilter() {
-      searchInput.value = ""; filterStatus.value = ""; filterPayment.value = ""; filterFrom.value = "2026-07-01";
+      function resetFilter() {
+        searchInput.value = "";
+        filterStatus.value = "";
+        filterPayment.value = "";
+        filterFrom.value = "2026-07-01";
+        renderTable();
+      }
+
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", renderTable);
       renderTable();
-    }
-
-    document.getElementById("searchInput").addEventListener("input", renderTable);
-    renderTable();
-  </script>
-</body>
+    </script>
+  </body>
 </html>

@@ -164,6 +164,106 @@ img { max-width: 100%; display: block; }
   margin: 2px 12px;
 }
 
+.menu-item--oos {
+  opacity: 0.45;
+}
+
+.menu-item--demo .menu-label {
+  font-weight: 500;
+}
+
+.menu-scope-badge {
+  margin-left: auto;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 18px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.55);
+}
+
+.menu-scope-badge--demo {
+  background: rgba(212, 175, 55, 0.25);
+  color: #f0d78c;
+}
+
+.sidebar.collapsed .menu-scope-badge {
+  display: none;
+}
+
+.demo-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: #fffbe6;
+  border: 1px solid #ffe58f;
+  border-radius: var(--radius);
+}
+
+.demo-banner strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #ad6800;
+  font-size: 13px;
+}
+
+.demo-banner p {
+  margin: 0;
+  font-size: 13px;
+  color: #614700;
+  line-height: 1.55;
+}
+
+.demo-banner a {
+  color: #ad6800;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.loop-story {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.loop-step {
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.loop-step .loop-num {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.loop-step h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.loop-step p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .loop-story { grid-template-columns: 1fr; }
+}
+
 .sidebar.collapsed .menu-group-title { height: 0; padding: 0; overflow: hidden; }
 
 .app-main {
@@ -280,11 +380,17 @@ img { max-width: 100%; display: block; }
   flex: 1;
   padding: 24px;
   min-height: calc(100vh - var(--header-height));
-  transition: opacity 0.15s ease;
 }
 .content.is-navigating {
-  opacity: 0.35;
   pointer-events: none;
+  cursor: progress;
+}
+.spa-page-enter {
+  animation: spaPageEnter 0.18s ease-out;
+}
+@keyframes spaPageEnter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .page-header {

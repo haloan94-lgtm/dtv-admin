@@ -2,63 +2,178 @@
 window.DTV = window.DTV || {};
 
 DTV.ICONS = {
-  dashboard: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
-  customers: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-  products: '<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
-  categories: '<svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
-  collections: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>',
-  orders: '<svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
-  production: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
-  inventory: '<svg viewBox="0 0 24 24"><path d="M22 12H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>',
-  pricing: '<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  dashboard:
+    '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+  customers:
+    '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  products:
+    '<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+  categories:
+    '<svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+  collections:
+    '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>',
+  orders:
+    '<svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+  production:
+    '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  inventory:
+    '<svg viewBox="0 0 24 24"><path d="M22 12H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>',
+  pricing:
+    '<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
   gold: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M8 10h8"/><path d="M8 14h8"/></svg>',
   debt: '<svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
-  payments: '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',
-  reports: '<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  payments:
+    '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',
+  reports:
+    '<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
   news: '<svg viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>',
   cms: '<svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-  users: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-  roles: '<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-  settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
-  logout: '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
-  search: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  users:
+    '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  roles:
+    '<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  settings:
+    '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  logout:
+    '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+  search:
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
   bell: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
   menu: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
-  close: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  close:
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
 };
 
 DTV.MENU = [
-  { group: "Tổng quan", items: [
-    { id: "dashboard", label: "Tổng quan", icon: "dashboard", href: "index.html" },
-  ]},
-  { group: "Kinh doanh", items: [
-    { id: "customers", label: "Khách hàng", icon: "customers", href: "pages/customers.html" },
-    { id: "products", label: "Sản phẩm", icon: "products", href: "pages/products.html" },
-    { id: "categories", label: "Danh mục", icon: "categories", href: "pages/categories.html" },
-    { id: "collections", label: "Bộ sưu tập", icon: "collections", href: "pages/collections.html" },
-    { id: "orders", label: "Đơn hàng", icon: "orders", href: "pages/orders.html" },
-  ]},
-  { group: "Vận hành", items: [
-    { id: "production", label: "Sản xuất", icon: "production", href: "pages/production.html" },
-    { id: "inventory", label: "Kho hàng", icon: "inventory", href: "pages/inventory.html" },
-  ]},
-  { group: "Tài chính", items: [
-    { id: "pricing", label: "Bảng giá", icon: "pricing", href: "pages/pricing.html" },
-    { id: "gold-price", label: "Giá vàng", icon: "gold", href: "pages/gold-price.html" },
-    { id: "debt", label: "Công nợ", icon: "debt", href: "pages/debt.html" },
-    { id: "payments", label: "Thanh toán", icon: "payments", href: "pages/payments.html" },
-    { id: "reports", label: "Báo cáo", icon: "reports", href: "pages/reports.html" },
-  ]},
-  { group: "Nội dung", items: [
-    { id: "news", label: "Tin tức", icon: "news", href: "pages/news.html" },
-    { id: "cms", label: "Nội dung web", icon: "cms", href: "pages/cms.html" },
-  ]},
-  { group: "Hệ thống", items: [
-    { id: "users", label: "Người dùng", icon: "users", href: "pages/users.html" },
-    { id: "roles", label: "Vai trò", icon: "roles", href: "pages/roles.html" },
-    { id: "settings", label: "Cài đặt", icon: "settings", href: "pages/settings.html" },
-    { id: "logout", label: "Đăng xuất", icon: "logout", href: "#" },
-  ]},
+  {
+    group: "Tổng quan",
+    items: [
+      {
+        id: "dashboard",
+        label: "Tổng quan",
+        icon: "dashboard",
+        href: "index.html",
+      },
+    ],
+  },
+  {
+    group: "Đơn hàng & giá",
+    items: [
+      {
+        id: "orders",
+        label: "Đơn hàng",
+        icon: "orders",
+        href: "pages/orders.html",
+      },
+      {
+        id: "production",
+        label: "Sản xuất",
+        icon: "production",
+        href: "pages/production.html",
+      },
+      {
+        id: "gold-price",
+        label: "Giá vàng",
+        icon: "gold",
+        href: "pages/gold-price.html",
+      },
+      {
+        id: "pricing",
+        label: "Bảng giá",
+        icon: "pricing",
+        href: "pages/pricing.html",
+      },
+    ],
+  },
+  {
+    group: "Kinh doanh",
+    items: [
+      {
+        id: "customers",
+        label: "Khách hàng",
+        icon: "customers",
+        href: "pages/customers.html",
+      },
+      {
+        id: "products",
+        label: "Sản phẩm",
+        icon: "products",
+        href: "pages/products.html",
+      },
+      {
+        id: "categories",
+        label: "Danh mục",
+        icon: "categories",
+        href: "pages/categories.html",
+      },
+      {
+        id: "collections",
+        label: "Bộ sưu tập",
+        icon: "collections",
+        href: "pages/collections.html",
+      },
+    ],
+  },
+  {
+    group: "Vận hành",
+    items: [
+      {
+        id: "inventory",
+        label: "Kho hàng",
+        icon: "inventory",
+        href: "pages/inventory.html",
+      },
+    ],
+  },
+  {
+    group: "Tài chính",
+    items: [
+      { id: "debt", label: "Công nợ", icon: "debt", href: "pages/debt.html" },
+      {
+        id: "payments",
+        label: "Thanh toán",
+        icon: "payments",
+        href: "pages/payments.html",
+      },
+      {
+        id: "reports",
+        label: "Báo cáo",
+        icon: "reports",
+        href: "pages/reports.html",
+      },
+    ],
+  },
+  {
+    group: "Nội dung",
+    items: [
+      { id: "news", label: "Tin tức", icon: "news", href: "pages/news.html" },
+      { id: "cms", label: "Nội dung web", icon: "cms", href: "pages/cms.html" },
+    ],
+  },
+  {
+    group: "Hệ thống",
+    items: [
+      {
+        id: "users",
+        label: "Người dùng",
+        icon: "users",
+        href: "pages/users.html",
+      },
+      {
+        id: "roles",
+        label: "Vai trò",
+        icon: "roles",
+        href: "pages/roles.html",
+      },
+      {
+        id: "settings",
+        label: "Cài đặt",
+        icon: "settings",
+        href: "pages/settings.html",
+      },
+      { id: "logout", label: "Đăng xuất", icon: "logout", href: "#" },
+    ],
+  },
 ];
 
 DTV.getAppRoot = () => {
@@ -67,7 +182,8 @@ DTV.getAppRoot = () => {
     return path.replace(/\/pages\/[^/]*$/, "/");
   }
   // directory containing the current html file
-  return path.replace(/[^/]*$/, "") || "/";
+  const lastSlash = path.lastIndexOf("/");
+  return lastSlash >= 0 ? path.slice(0, lastSlash + 1) : "/";
 };
 
 DTV.getBasePath = () => {
@@ -76,7 +192,13 @@ DTV.getBasePath = () => {
 };
 
 DTV.resolveHref = (href) => {
-  if (!href || href === "#" || href.startsWith("http") || href.startsWith("mailto:")) return href;
+  if (
+    !href ||
+    href === "#" ||
+    href.startsWith("http") ||
+    href.startsWith("mailto:")
+  )
+    return href;
   if (href.startsWith("/")) return href;
 
   const root = DTV.getAppRoot();
@@ -150,14 +272,19 @@ DTV.bindShellEvents = () => {
     } else {
       sidebar.classList.toggle("collapsed");
       appMain.classList.toggle("sidebar-collapsed");
-      localStorage.setItem("dtv-sidebar-collapsed", sidebar.classList.contains("collapsed") ? "1" : "0");
+      localStorage.setItem(
+        "dtv-sidebar-collapsed",
+        sidebar.classList.contains("collapsed") ? "1" : "0",
+      );
     }
   });
 
   document.getElementById("overlay")?.addEventListener("click", () => {
     document.getElementById("sidebar")?.classList.remove("mobile-open");
     document.getElementById("overlay")?.classList.remove("open");
-    document.querySelectorAll(".modal.open, .drawer.open").forEach((el) => el.classList.remove("open"));
+    document
+      .querySelectorAll(".modal.open, .drawer.open")
+      .forEach((el) => el.classList.remove("open"));
   });
 
   document.addEventListener("click", (e) => {
@@ -247,7 +374,12 @@ DTV.renderLayout = (options = {}) => {
 
 /* Toast */
 DTV.toast = (title, desc = "", type = "success") => {
-  const colors = { success: "#52c41a", error: "#ff4d4f", warning: "#faad14", info: "#1677ff" };
+  const colors = {
+    success: "#52c41a",
+    error: "#ff4d4f",
+    warning: "#faad14",
+    info: "#1677ff",
+  };
   const el = document.createElement("div");
   el.className = "toast";
   el.innerHTML = `
@@ -257,7 +389,10 @@ DTV.toast = (title, desc = "", type = "success") => {
       ${desc ? `<div class="toast-desc">${desc}</div>` : ""}
     </div>`;
   document.getElementById("toastContainer").appendChild(el);
-  setTimeout(() => { el.style.opacity = "0"; setTimeout(() => el.remove(), 250); }, 3000);
+  setTimeout(() => {
+    el.style.opacity = "0";
+    setTimeout(() => el.remove(), 250);
+  }, 3000);
 };
 
 /* Modal helpers */
@@ -284,12 +419,19 @@ DTV.closeDrawer = (id) => {
 
 /* Tabs */
 DTV.initTabs = (container) => {
-  const root = typeof container === "string" ? document.querySelector(container) : container;
+  const root =
+    typeof container === "string"
+      ? document.querySelector(container)
+      : container;
   if (!root) return;
-  root.querySelectorAll(".tab-item").forEach(tab => {
+  root.querySelectorAll(".tab-item").forEach((tab) => {
     tab.addEventListener("click", () => {
-      root.querySelectorAll(".tab-item").forEach(t => t.classList.remove("active"));
-      root.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      root
+        .querySelectorAll(".tab-item")
+        .forEach((t) => t.classList.remove("active"));
+      root
+        .querySelectorAll(".tab-panel")
+        .forEach((p) => p.classList.remove("active"));
       tab.classList.add("active");
       const panel = root.querySelector(`[data-panel="${tab.dataset.tab}"]`);
       if (panel) panel.classList.add("active");
@@ -301,21 +443,27 @@ DTV.initTabs = (container) => {
 DTV.renderBarChart = (containerId, data, opts = {}) => {
   const el = document.getElementById(containerId);
   if (!el) return;
-  const max = Math.max(...data.map(d => d.value), 1);
+  const max = Math.max(...data.map((d) => d.value), 1);
   const color = opts.color || "var(--primary)";
-  el.innerHTML = `<div class="chart-bars">${data.map(d => `
+  el.innerHTML = `<div class="chart-bars">${data
+    .map(
+      (d) => `
     <div class="chart-bar-group">
       <div class="chart-bar" style="height:${(d.value / max) * 100}%; background:${color}" title="${d.value}"></div>
       <span class="chart-label">${d.label}</span>
-    </div>`).join("")}</div>`;
+    </div>`,
+    )
+    .join("")}</div>`;
 };
 
 /* Simple line chart (SVG) */
 DTV.renderLineChart = (containerId, data, opts = {}) => {
   const el = document.getElementById(containerId);
   if (!el) return;
-  const w = 600, h = 200, pad = 20;
-  const max = Math.max(...data.map(d => d.value), 1);
+  const w = 600,
+    h = 200,
+    pad = 20;
+  const max = Math.max(...data.map((d) => d.value), 1);
   const stepX = (w - pad * 2) / (data.length - 1 || 1);
   const points = data.map((d, i) => {
     const x = pad + i * stepX;
@@ -328,14 +476,16 @@ DTV.renderLineChart = (containerId, data, opts = {}) => {
       <svg class="chart-line-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
         <polygon points="${area}" fill="rgba(201,162,39,0.12)" />
         <polyline points="${points.join(" ")}" fill="none" stroke="#c9a227" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-        ${data.map((d, i) => {
-          const x = pad + i * stepX;
-          const y = h - pad - (d.value / max) * (h - pad * 2);
-          return `<circle cx="${x}" cy="${y}" r="3.5" fill="#c9a227" stroke="#fff" stroke-width="2"/>`;
-        }).join("")}
+        ${data
+          .map((d, i) => {
+            const x = pad + i * stepX;
+            const y = h - pad - (d.value / max) * (h - pad * 2);
+            return `<circle cx="${x}" cy="${y}" r="3.5" fill="#c9a227" stroke="#fff" stroke-width="2"/>`;
+          })
+          .join("")}
       </svg>
       <div style="display:flex;justify-content:space-between;padding:0 12px;margin-top:4px">
-        ${data.map(d => `<span class="chart-label">${d.label}</span>`).join("")}
+        ${data.map((d) => `<span class="chart-label">${d.label}</span>`).join("")}
       </div>
     </div>`;
 };
@@ -372,12 +522,20 @@ DTV.isInternalUrl = (url) => {
 };
 
 DTV.clearPageExtras = () => {
-  document.querySelectorAll("body > .drawer, body > .modal, [data-spa-page]").forEach((el) => el.remove());
-  document.querySelectorAll(".modal.open, .drawer.open").forEach((el) => el.classList.remove("open"));
+  document
+    .querySelectorAll("body > .drawer, body > .modal, [data-spa-page]")
+    .forEach((el) => el.remove());
+  document
+    .querySelectorAll(".modal.open, .drawer.open")
+    .forEach((el) => el.classList.remove("open"));
   document.getElementById("overlay")?.classList.remove("open");
 };
 
+DTV.getPageFunctionNames = (code = "") =>
+  [...code.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]);
+
 DTV.runPageScripts = (doc) => {
+  const pageScope = {};
   const scripts = [...doc.querySelectorAll("script")].filter((s) => {
     const src = s.getAttribute("src") || "";
     if (src) return false; // external already loaded (mock-data, layout, tailwind)
@@ -390,11 +548,122 @@ DTV.runPageScripts = (doc) => {
 
   scripts.forEach((old) => {
     try {
-      (0, eval)(old.textContent);
+      const code = old.textContent || "";
+      const names = [...new Set(DTV.getPageFunctionNames(code))];
+      const exports = names
+        .map(
+          (name) =>
+            `${JSON.stringify(name)}: typeof ${name} === "function" ? ${name} : undefined`,
+        )
+        .join(",");
+      const runner = new Function(
+        "__pageScope",
+        `
+          with (window) {
+            with (__pageScope) {
+              ${code}
+              return { ${exports} };
+            }
+          }
+        `,
+      );
+      const exported = runner(pageScope);
+      Object.entries(exported || {}).forEach(([name, value]) => {
+        if (typeof value === "function") pageScope[name] = value;
+      });
     } catch (err) {
       console.error("[DTV SPA] Page script error:", err);
     }
   });
+
+  return pageScope;
+};
+
+DTV.bindInlineHandlers = (roots, pageScope = {}) => {
+  roots.forEach((root) => {
+    const nodes = root.matches?.("[onclick]")
+      ? [root, ...root.querySelectorAll("[onclick]")]
+      : [...root.querySelectorAll("[onclick]")];
+    nodes.forEach((el) => {
+      const code = el.getAttribute("onclick");
+      if (!code) return;
+      el.removeAttribute("onclick");
+      el.addEventListener("click", function (event) {
+        const runner = new Function(
+          "__pageScope",
+          "event",
+          `
+            with (window) {
+              with (__pageScope) {
+                ${code}
+              }
+            }
+          `,
+        );
+        return runner.call(this, pageScope, event);
+      });
+    });
+  });
+};
+
+DTV.fetchPageDocument = async (url) => {
+  const res = await fetch(url, { credentials: "same-origin" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const html = await res.text();
+  return new DOMParser().parseFromString(html, "text/html");
+};
+
+DTV.loadPageDocumentWithFrame = (url) =>
+  new Promise((resolve, reject) => {
+    const frame = document.createElement("iframe");
+    let done = false;
+
+    const cleanup = () => {
+      frame.remove();
+    };
+
+    const finish = (fn, value) => {
+      if (done) return;
+      done = true;
+      fn(value);
+      // Let the caller import nodes before the hidden frame disappears.
+      setTimeout(cleanup, 0);
+    };
+
+    frame.style.cssText =
+      "position:absolute;width:0;height:0;border:0;opacity:0;pointer-events:none;";
+    frame.setAttribute("aria-hidden", "true");
+    frame.tabIndex = -1;
+
+    frame.addEventListener("load", () => {
+      try {
+        const doc = frame.contentDocument || frame.contentWindow?.document;
+        if (!doc?.getElementById("page-root"))
+          throw new Error("Missing #page-root");
+        finish(resolve, doc);
+      } catch (err) {
+        finish(reject, err);
+      }
+    });
+
+    frame.addEventListener("error", () => {
+      finish(reject, new Error("Iframe navigation failed"));
+    });
+
+    document.body.appendChild(frame);
+    frame.src = url;
+  });
+
+DTV.loadPageDocument = async (url) => {
+  try {
+    return await DTV.fetchPageDocument(url);
+  } catch (err) {
+    console.warn(
+      "[DTV SPA] Fetch navigation failed, using iframe loader:",
+      err,
+    );
+    return DTV.loadPageDocumentWithFrame(url);
+  }
 };
 
 DTV.navigate = async (url, { replace = false, skipHistory = false } = {}) => {
@@ -420,12 +689,9 @@ DTV.navigate = async (url, { replace = false, skipHistory = false } = {}) => {
   main.classList.add("is-navigating");
 
   try {
-    const res = await fetch(target.href, { credentials: "same-origin" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const html = await res.text();
+    const doc = await DTV.loadPageDocument(target.href);
     if (token !== DTV._navToken) return;
 
-    const doc = new DOMParser().parseFromString(html, "text/html");
     const pageRoot = doc.getElementById("page-root");
     if (!pageRoot) throw new Error("Missing #page-root");
 
@@ -434,18 +700,22 @@ DTV.navigate = async (url, { replace = false, skipHistory = false } = {}) => {
     // Inject page content
     const imported = document.importNode(pageRoot, true);
     imported.style.display = "block";
-    imported.setAttribute("data-spa-page", "1");
+    imported.dataset.spaPage = "1";
+    imported.classList.add("spa-page-enter");
     main.innerHTML = "";
     main.appendChild(imported);
+    requestAnimationFrame(() => imported.classList.remove("spa-page-enter"));
 
     // Inject drawers / modals from the fetched page body
+    const extras = [];
     [...doc.body.children].forEach((child) => {
       if (child.id === "page-root") return;
       if (child.matches("script")) return;
       if (child.matches(".drawer, .modal")) {
         const node = document.importNode(child, true);
-        node.setAttribute("data-spa-page", "1");
+        node.dataset.spaPage = "1";
         document.body.appendChild(node);
+        extras.push(node);
       }
     });
 
@@ -455,10 +725,14 @@ DTV.navigate = async (url, { replace = false, skipHistory = false } = {}) => {
     }
 
     // Scroll content to top
-    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+    window.scrollTo({
+      top: 0,
+      behavior: "instant" in window ? "instant" : "auto",
+    });
     main.scrollTop = 0;
 
-    DTV.runPageScripts(doc);
+    const pageScope = DTV.runPageScripts(doc);
+    DTV.bindInlineHandlers([imported, ...extras], pageScope);
   } catch (err) {
     console.error("[DTV SPA] Navigation failed, falling back:", err);
     location.href = target.href;

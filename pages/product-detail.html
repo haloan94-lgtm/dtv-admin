@@ -45,6 +45,7 @@
         <button class="tab-item" data-tab="inventory">Tồn kho</button>
         <button class="tab-item" data-tab="collections">Bộ sưu tập</button>
         <button class="tab-item" data-tab="pricing">Giá & Công</button>
+        <button class="tab-item" data-tab="engraving">Khắc tên</button>
         <button class="tab-item" data-tab="history">Lịch sử</button>
       </div>
       <div class="card-body">
@@ -52,6 +53,7 @@
         <div class="tab-panel" data-panel="inventory" id="panelInventory"></div>
         <div class="tab-panel" data-panel="collections" id="panelCollections"></div>
         <div class="tab-panel" data-panel="pricing" id="panelPricing"></div>
+        <div class="tab-panel" data-panel="engraving" id="panelEngraving"></div>
         <div class="tab-panel" data-panel="history" id="panelHistory"></div>
       </div>
     </div>
@@ -87,6 +89,7 @@
         <div class="desc-item"><div class="desc-label">Size</div><div class="desc-value">${product.size}</div></div>
         <div class="desc-item"><div class="desc-label">Giá bán</div><div class="desc-value cell-money">${DTV.formatMoney(product.price)}</div></div>
         <div class="desc-item"><div class="desc-label">Đã bán</div><div class="desc-value">${product.sold} sản phẩm</div></div>
+        <div class="desc-item"><div class="desc-label">Khắc tên</div><div class="desc-value">${product.engravingEnabled ? DTV.tag("active") + " · phí " + DTV.formatMoney(product.engravingFee) : '<span class="cell-muted">Không hỗ trợ</span>'}</div></div>
       </div>`;
 
     document.getElementById("statRow").innerHTML = [
@@ -169,6 +172,65 @@
           </table>
         </div>
       </div>`;
+
+    document.getElementById("panelEngraving").innerHTML = `
+      <div class="loop-story mb-24">
+        <div class="loop-step">
+          <span class="loop-num">1 · Admin</span>
+          <h4>Bật khắc tên</h4>
+          <p>Cấu hình phí và độ dài tối đa trên sản phẩm.</p>
+        </div>
+        <div class="loop-step">
+          <span class="loop-num">2 · Portal</span>
+          <h4>Đại lý nhập nội dung</h4>
+          <p>Khi đặt hàng, đại lý ghi tên/chữ cần khắc.</p>
+        </div>
+        <div class="loop-step">
+          <span class="loop-num">3 · Sản xuất</span>
+          <h4>In trên lệnh SX</h4>
+          <p>Nội dung khắc đi kèm dòng đơn và lệnh sản xuất.</p>
+        </div>
+      </div>
+      <div class="form-row cols-2" style="max-width:640px">
+        <div class="form-group">
+          <label class="form-label">Cho phép khắc tên theo yêu cầu</label>
+          <label class="flex gap-8" style="align-items:center;margin-top:8px">
+            <input type="checkbox" id="engEnabled" ${product.engravingEnabled ? "checked" : ""}>
+            <span>Bật trên portal khi đại lý đặt hàng</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phí khắc / sản phẩm (VND)</label>
+          <input class="form-control" type="number" id="engFee" value="${product.engravingFee || 0}" min="0" step="10000">
+        </div>
+      </div>
+      <div class="form-row cols-2" style="max-width:640px">
+        <div class="form-group">
+          <label class="form-label">Độ dài tối đa</label>
+          <input class="form-control" type="number" id="engMaxLen" value="${product.engravingMaxLen || 20}" min="1" max="40">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ghi chú nội bộ</label>
+          <input class="form-control" id="engNote" placeholder="VD: Chỉ khắc mặt trong nhẫn">
+        </div>
+      </div>
+      <button class="btn btn-primary" type="button" id="btnSaveEngraving">Lưu cấu hình khắc tên</button>
+      <p class="cell-muted mt-16" style="font-size:13px">Phí khắc được cộng thêm vào đơn giá trên portal khi đại lý chọn khắc tên.</p>`;
+
+    document.getElementById("btnSaveEngraving")?.addEventListener("click", () => {
+      const enabled = document.getElementById("engEnabled").checked;
+      const fee = Number(document.getElementById("engFee").value) || 0;
+      const maxLen = Number(document.getElementById("engMaxLen").value) || 20;
+      product.engravingEnabled = enabled;
+      product.engravingFee = enabled ? fee : 0;
+      product.engravingMaxLen = maxLen;
+      DTV.toast(
+        "Đã lưu khắc tên",
+        enabled
+          ? `Bật · phí ${DTV.formatMoney(fee)} · tối đa ${maxLen} ký tự`
+          : "Đã tắt khắc tên trên portal",
+      );
+    });
 
     document.getElementById("panelHistory").innerHTML = `
       <div class="timeline">

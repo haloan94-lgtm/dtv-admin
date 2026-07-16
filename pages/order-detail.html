@@ -18,6 +18,15 @@
       <div class="page-actions" id="pageActions"></div>
     </div>
 
+    <div class="demo-banner">
+      <div>
+        <strong>Luồng liên kết đơn hàng → sản xuất</strong>
+        <p>
+          Khi đại lý đặt đơn và được duyệt, hệ thống tự tạo lệnh sản xuất tương ứng (xem panel bên dưới).
+        </p>
+      </div>
+    </div>
+
     <div class="steps mb-24" id="orderSteps"></div>
 
     <div class="grid grid-4 mb-24" id="statRow"></div>
@@ -141,7 +150,10 @@
     document.getElementById("itemCount").textContent = items.length + " dòng";
     document.getElementById("itemTable").innerHTML = items.map(it => `
       <tr>
-        <td><a href="product-detail.html?id=${it.productId}">${it.name}</a></td>
+        <td>
+          <a href="product-detail.html?id=${it.productId}">${it.name}</a>
+          ${it.engravingText ? `<div class="cell-muted" style="font-size:12px;margin-top:4px">Khắc tên: <strong style="color:var(--primary)">${it.engravingText}</strong>${it.engravingFee ? " · +" + DTV.formatMoney(it.engravingFee) : ""}</div>` : ""}
+        </td>
         <td class="cell-muted">${it.sku}</td>
         <td>${it.qty}</td>
         <td>${it.weight}</td>
@@ -153,7 +165,12 @@
         <td class="cell-money fw-500">${DTV.formatMoney(order.total)}</td>
       </tr>`;
 
-    document.getElementById("productionPanel").innerHTML = production.length ? production.map(p => `
+    document.getElementById("productionPanel").innerHTML = production.length ? `
+      <div class="mb-16" style="padding:10px 12px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:6px;font-size:13px">
+        ✓ Lệnh SX được <strong>tự tạo</strong> từ đơn ${order.id}
+        · <a href="production.html?order=${order.id}">Xem trên bảng SX</a>
+      </div>
+      ${production.map(p => `
       <div style="padding:12px 0;border-bottom:1px solid var(--border)">
         <div class="flex gap-8" style="justify-content:space-between;margin-bottom:8px">
           <span class="fw-500">${p.product}</span>
@@ -162,7 +179,7 @@
         <div class="cell-muted" style="font-size:12px;margin-bottom:8px">${p.id} · ${p.assignee} · ${p.factory}</div>
         <div class="progress"><div class="progress-bar" style="width:${p.progress}%"></div></div>
         <div class="cell-muted" style="font-size:12px;margin-top:4px">${p.progress}% · Dự kiến ${DTV.formatDate(p.eta)}</div>
-      </div>`).join("") : `<div class="empty-state"><div class="empty-state-title">${DTV.tag(order.production)} Chưa có lệnh SX</div></div>`;
+      </div>`).join("")}` : `<div class="empty-state"><div class="empty-state-title">${DTV.tag(order.production)} Chưa có lệnh SX</div><p class="cell-muted" style="margin-top:8px">Sau khi duyệt đơn, lệnh SX sẽ được tạo tự động.</p></div>`;
 
     const shipLabels = { pending: "Chờ giao hàng", packing: "Đang đóng gói", in_transit: "Đang vận chuyển", delivered: "Đã giao hàng", cancelled: "Đã hủy" };
     document.getElementById("shipmentPanel").innerHTML = `

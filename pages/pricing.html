@@ -1,100 +1,149 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bảng giá — Đô Thị Vàng</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config={corePlugins:{preflight:false}}</script>
-  <link rel="stylesheet" href="../assets/css/main.css">
-</head>
-<body>
-  <div id="page-root" style="display:none">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Bảng giá</h1>
-        <p class="page-desc">Quản lý tiền công và chiết khấu theo hạng đại lý</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bảng giá — Đô Thị Vàng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { corePlugins: { preflight: false } };
+    </script>
+    <link rel="stylesheet" href="../assets/css/main.css" />
+  </head>
+  <body>
+    <div id="page-root" style="display: none">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Bảng giá</h1>
+          <p class="page-desc">Quản lý tiền công và chiết khấu theo hạng đại lý</p>
+        </div>
+        <div class="page-actions">
+          <button
+            class="btn btn-primary"
+            onclick="DTV.openDrawer('drawerLabor')"
+          >
+            + Thêm giá công
+          </button>
+        </div>
       </div>
-      <div class="page-actions">
-        <button class="btn btn-primary" onclick="DTV.openDrawer('drawerLabor')">+ Thêm giá công</button>
-      </div>
-    </div>
 
-    <div class="card mb-24">
-      <div class="card-header">
-        <h3 class="card-title">Giá tiền công theo danh mục</h3>
-        <span class="card-extra">Đơn vị: VND / chỉ vàng</span>
+      <div class="card mb-24">
+        <div class="card-header">
+          <h3 class="card-title">Giá tiền công theo danh mục</h3>
+          <span class="card-extra">Đơn vị: VND / chỉ vàng</span>
+        </div>
+        <div class="card-body no-padding">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mã</th>
+                  <th>Danh mục</th>
+                  <th>Loại vàng</th>
+                  <th>Tiền công / chỉ</th>
+                  <th>Hiệu lực từ</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="laborTable"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="card-body no-padding">
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Mã</th>
-                <th>Danh mục</th>
-                <th>Loại vàng</th>
-                <th>Tiền công / chỉ</th>
-                <th>Hiệu lực từ</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="laborTable"></tbody>
-          </table>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Chiết khấu theo hạng đại lý</h3>
+          <button
+            class="btn btn-link btn-sm"
+            onclick="DTV.toast('Cập nhật', 'Lưu chiết khấu hạng đại lý')"
+          >
+            Cập nhật
+          </button>
+        </div>
+        <div class="card-body no-padding">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Hạng</th>
+                  <th>Chiết khấu SP</th>
+                  <th>Chiết khấu công</th>
+                  <th>Đơn tối thiểu</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="tierTable"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">Chiết khấu theo hạng đại lý</h3>
-        <button class="btn btn-link btn-sm" onclick="DTV.toast('Cập nhật','Lưu chiết khấu hạng đại lý')">Cập nhật</button>
+    <div class="drawer" id="drawerLabor">
+      <div class="drawer-header">
+        <h3 class="drawer-title">Thêm giá tiền công</h3>
+        <button class="modal-close" onclick="DTV.closeDrawer('drawerLabor')">
+          ×
+        </button>
       </div>
-      <div class="card-body no-padding">
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Hạng</th>
-                <th>Chiết khấu SP</th>
-                <th>Chiết khấu công</th>
-                <th>Đơn tối thiểu</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="tierTable"></tbody>
-          </table>
+      <div class="drawer-body">
+        <div class="form-group">
+          <label class="form-label">Danh mục</label
+          ><input class="form-control" placeholder="VD: Nhẫn trơn" />
+        </div>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label class="form-label">Loại vàng</label
+            ><select class="form-control">
+              <option>24K</option>
+              <option>18K</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tiền công / chỉ</label
+            ><input class="form-control" type="number" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày hiệu lực</label
+          ><input class="form-control" type="date" />
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="drawer" id="drawerLabor">
-    <div class="drawer-header">
-      <h3 class="drawer-title">Thêm giá tiền công</h3>
-      <button class="modal-close" onclick="DTV.closeDrawer('drawerLabor')">×</button>
-    </div>
-    <div class="drawer-body">
-      <div class="form-group"><label class="form-label">Danh mục</label><input class="form-control" placeholder="VD: Nhẫn trơn"></div>
-      <div class="form-row cols-2">
-        <div class="form-group"><label class="form-label">Loại vàng</label><select class="form-control"><option>24K</option><option>18K</option></select></div>
-        <div class="form-group"><label class="form-label">Tiền công / chỉ</label><input class="form-control" type="number"></div>
+      <div class="drawer-footer">
+        <button
+          class="btn btn-default"
+          onclick="DTV.closeDrawer('drawerLabor')"
+        >
+          Hủy
+        </button>
+        <button
+          class="btn btn-primary"
+          onclick="
+            DTV.closeDrawer('drawerLabor');
+            DTV.toast('Thành công', 'Đã thêm giá công');
+          "
+        >
+          Lưu
+        </button>
       </div>
-      <div class="form-group"><label class="form-label">Ngày hiệu lực</label><input class="form-control" type="date"></div>
     </div>
-    <div class="drawer-footer">
-      <button class="btn btn-default" onclick="DTV.closeDrawer('drawerLabor')">Hủy</button>
-      <button class="btn btn-primary" onclick="DTV.closeDrawer('drawerLabor');DTV.toast('Thành công','Đã thêm giá công')">Lưu</button>
-    </div>
-  </div>
 
-  <script src="../assets/js/mock-data.js"></script>
-  <script src="../assets/js/layout.js"></script>
-  <script>
-    DTV.renderLayout({ active: "pricing", breadcrumb: [{ label: "Bảng giá" }], title: "Bảng giá" });
-    document.querySelector("#drawerLabor .modal-close").innerHTML = DTV.ICONS.close;
+    <script src="../assets/js/mock-data.js"></script>
+    <script src="../assets/js/layout.js"></script>
+    <script>
+      DTV.renderLayout({
+        active: "pricing",
+        breadcrumb: [{ label: "Bảng giá" }],
+        title: "Bảng giá",
+      });
+      document.querySelector("#drawerLabor .modal-close").innerHTML =
+        DTV.ICONS.close;
 
-    document.getElementById("laborTable").innerHTML = DTV.laborPrices.map(l => `
+      document.getElementById("laborTable").innerHTML = DTV.laborPrices
+        .map(
+          (l) => `
       <tr>
         <td class="cell-muted">${l.id}</td>
         <td class="fw-500">${l.category}</td>
@@ -105,16 +154,22 @@
         <td class="actions">
           <button class="btn btn-link btn-sm" onclick="DTV.openDrawer('drawerLabor')">Sửa</button>
         </td>
-      </tr>`).join("");
+      </tr>`,
+        )
+        .join("");
 
-    document.getElementById("tierTable").innerHTML = DTV.tierPrices.map(t => `
+      document.getElementById("tierTable").innerHTML = DTV.tierPrices
+        .map(
+          (t) => `
       <tr>
         <td>${DTV.tag(t.tier)}</td>
         <td>${t.discount}%</td>
         <td>${t.laborDiscount}%</td>
         <td class="cell-money">${DTV.formatMoney(t.minOrder)}</td>
         <td><button class="btn btn-link btn-sm" onclick="DTV.toast('Sửa hạng','Cập nhật chiết khấu ' + '${t.tier}')">Sửa</button></td>
-      </tr>`).join("");
-  </script>
-</body>
+      </tr>`,
+        )
+        .join("");
+    </script>
+  </body>
 </html>

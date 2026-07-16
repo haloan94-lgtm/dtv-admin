@@ -61,19 +61,18 @@
       </div>
     </div>
 
-    <script src="assets/js/layout.js"></script>
+    <script src="assets/js/auth.js"></script>
     <script>
       (function () {
-        function redirectAfterLogin() {
-          const params = new URLSearchParams(location.search);
-          const next = params.get("next");
-          const safe =
-            next && next.startsWith("/") && !next.startsWith("//") ? next : null;
-          location.replace(safe || "index.html");
+        if (typeof DTV.isAuthenticated !== "function") {
+          document.getElementById("loginAlert").textContent =
+            "Không tải được auth.js. Kiểm tra đường dẫn assets/js/auth.js trên server.";
+          document.getElementById("loginAlert").hidden = false;
+          return;
         }
 
         if (DTV.isAuthenticated()) {
-          redirectAfterLogin();
+          DTV.redirectAfterLogin();
           return;
         }
 
@@ -81,7 +80,7 @@
         const alertEl = document.getElementById("loginAlert");
         const btn = document.getElementById("loginBtn");
 
-        form.addEventListener("submit", (e) => {
+        form.addEventListener("submit", function (e) {
           e.preventDefault();
           alertEl.hidden = true;
           btn.disabled = true;
@@ -100,7 +99,7 @@
             return;
           }
 
-          redirectAfterLogin();
+          DTV.redirectAfterLogin();
         });
       })();
     </script>

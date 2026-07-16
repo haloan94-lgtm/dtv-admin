@@ -1,57 +1,6 @@
 /* Đô Thị Vàng — Layout (Sidebar + Header) */
 window.DTV = window.DTV || {};
 
-/* ========== Auth (mock) ========== */
-DTV.AUTH_KEY = "dtv-admin-session";
-DTV.DEMO_USER = { username: "admin", password: "admin" };
-
-DTV.isLoginPage = () => /\/login\.html?$/i.test(location.pathname);
-
-DTV.getSession = () => {
-  try {
-    const raw = localStorage.getItem(DTV.AUTH_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-};
-
-DTV.isAuthenticated = () => {
-  const s = DTV.getSession();
-  return !!(s && s.username);
-};
-
-DTV.login = (username, password) => {
-  const u = String(username || "").trim();
-  const p = String(password || "");
-  if (u === DTV.DEMO_USER.username && p === DTV.DEMO_USER.password) {
-    const session = {
-      username: u,
-      name: "Nguyễn Quản Trị",
-      role: "Quản trị viên",
-      at: Date.now(),
-    };
-    localStorage.setItem(DTV.AUTH_KEY, JSON.stringify(session));
-    return { ok: true, session };
-  }
-  return { ok: false, error: "Tài khoản hoặc mật khẩu không đúng." };
-};
-
-DTV.logout = () => {
-  localStorage.removeItem(DTV.AUTH_KEY);
-  location.href = DTV.getAppRoot() + "login.html";
-};
-
-DTV.requireAuth = () => {
-  if (DTV.isLoginPage()) return true;
-  if (DTV.isAuthenticated()) return true;
-  const next = encodeURIComponent(
-    location.pathname + location.search + location.hash,
-  );
-  location.replace(DTV.getAppRoot() + "login.html?next=" + next);
-  return false;
-};
-
 DTV.ICONS = {
   dashboard:
     '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',

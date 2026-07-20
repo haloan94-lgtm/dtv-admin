@@ -9,6 +9,57 @@
       tailwind.config = { corePlugins: { preflight: false } };
     </script>
     <link rel="stylesheet" href="../assets/css/main.css" />
+    <style>
+      .approve-loading {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.15s ease, visibility 0.15s ease;
+      }
+      .approve-loading.open {
+        opacity: 1;
+        visibility: visible;
+      }
+      .approve-loading-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.72);
+      }
+      .approve-loading-box {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 28px 36px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      }
+      .approve-loading-spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #e8e8e8;
+        border-top-color: var(--primary, #a7192d);
+        border-radius: 50%;
+        animation: approve-spin 0.7s linear infinite;
+      }
+      .approve-loading-text {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-secondary, #666);
+      }
+      @keyframes approve-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="page-root" style="display: none">
@@ -122,6 +173,14 @@
         </div>
         <div class="pagination" id="pagination"></div>
       </div>
+
+      <div class="approve-loading" id="approveLoading" aria-hidden="true">
+        <div class="approve-loading-backdrop"></div>
+        <div class="approve-loading-box">
+          <div class="approve-loading-spinner"></div>
+          <p class="approve-loading-text">Đang duyệt đơn...</p>
+        </div>
+      </div>
     </div>
 
     <script src="../assets/js/mock-data.js"></script>
@@ -134,60 +193,105 @@
         title: "Đơn hàng",
       });
 
-      document.getElementById("statRow").innerHTML = [
-        {
-          label: "Chờ duyệt",
-          value: DTV.orders.filter((o) => o.status === "pending").length,
-          cls: "text-warning",
-        },
-        {
-          label: "Đang SX",
-          value: DTV.orders.filter((o) => o.status === "producing").length,
-          cls: "text-processing",
-        },
-        {
-          label: "Đang giao",
-          value: DTV.orders.filter((o) => o.status === "shipping").length,
-          cls: "",
-        },
-        {
-          label: "Hoàn thành",
-          value: DTV.orders.filter((o) => o.status === "completed").length,
-          cls: "text-success",
-        },
-      ]
-        .map(
-          (s) =>
-            `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.cls}" style="font-size:28px">${s.value}</div></div>`,
-        )
-        .join("");
+      const APPROVE_LOADING_MS = 500;
+      let approvingOrderId = null;
+
+      function setApproveLoading(show) {
+        const el = document.getElementById("approveLoading");
+        el.classList.toggle("open", show);
+        el.setAttribute("aria-hidden", show ? "false" : "true");
+      }
+
+      function renderStats() {
+        document.getElementById("statRow").innerHTML = [
+          {
+            label: "Chờ duyệt",
+            value: DTV.orders.filter((o) => o.status === "pending").length,
+            cls: "text-warning",
+          },
+          {
+            label: "Đang SX",
+            value: DTV.orders.filter((o) => o.status === "producing").length,
+            cls: "text-processing",
+          },
+          {
+            label: "Đang giao",
+            value: DTV.orders.filter((o) => o.status === "shipping").length,
+            cls: "",
+          },
+          {
+            label: "Hoàn thành",
+            value: DTV.orders.filter((o) => o.status === "completed").length,
+            cls: "text-success",
+          },
+        ]
+          .map(
+            (s) =>
+              `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.cls}" style="font-size:28px">${s.value}</div></div>`,
+          )
+          .join("");
+      }
+
+      function approveOrder(orderId) {
+        const order = DTV.orders.find((o) => o.id === orderId);
+        if (!order || order.status !== "pending" || approvingOrderId) return;
+
+        approvingOrderId = orderId;
+        setApproveLoading(true);
+
+        setTimeout(() => {
+          const sx = DTV.production.filter((p) => p.orderId === orderId);
+          const sxId = sx.map((p) => p.id).join(", ") || "SX-" + orderId.slice(4);
+
+          order.status = "producing";
+          order.production = "in_progress";
+          order.approvedAt = new Date().toISOString();
+
+          setApproveLoading(false);
+          approvingOrderId = null;
+
+          DTV.toast(
+            "Đã duyệt",
+            `Đơn ${orderId} đã được phê duyệt · lệnh SX ${sxId} đã được tạo`,
+          );
+          renderStats();
+          renderTable();
+        }, APPROVE_LOADING_MS);
+      }
 
       function getFiltered() {
         const q = document.getElementById("searchInput").value.toLowerCase();
         const status = document.getElementById("filterStatus").value;
         const payment = document.getElementById("filterPayment").value;
         const from = document.getElementById("filterFrom").value;
-        return DTV.orders.filter((o) => {
-          if (q && !(o.id + o.customer).toLowerCase().includes(q)) return false;
-          if (status && o.status !== status) return false;
-          if (payment && o.payment !== payment) return false;
-          if (from && new Date(o.createdAt) < new Date(from)) return false;
-          return true;
-        });
+        return DTV.orders
+          .map((o, index) => ({ o, index }))
+          .filter(({ o }) => {
+            if (q && !(o.id + o.customer).toLowerCase().includes(q)) return false;
+            if (status && o.status !== status) return false;
+            if (payment && o.payment !== payment) return false;
+            if (from && new Date(o.createdAt) < new Date(from)) return false;
+            return true;
+          })
+          .sort((a, b) => a.index - b.index)
+          .map(({ o }) => o);
       }
 
       function renderTable() {
         const data = getFiltered();
         document.getElementById("orderTable").innerHTML = data
           .map((o) => {
-            const sx = DTV.production.filter((p) => p.orderId === o.id);
+            const sx =
+              o.status === "pending"
+                ? []
+                : DTV.production.filter((p) => p.orderId === o.id);
             const sxLabel = sx.length
               ? `<a href="production.html?order=${o.id}" class="fw-500">${sx.map((p) => p.id).join(", ")}</a>`
               : o.status === "pending"
                 ? `<span class="cell-muted">Chờ duyệt → tự tạo</span>`
                 : `<span class="cell-muted">—</span>`;
             return `
-        <tr ${o.id === "DH-2026-0847" ? 'style="background:#fffbe6"' : ""}>
+        <tr ${o.id === "DTV-00847" ? 'style="background:#fffbe6"' : ""}>
           <td><a href="order-detail.html?id=${o.id}" class="fw-500">${o.id}</a></td>
           <td>
             <div>${o.customer}</div>
@@ -203,7 +307,7 @@
           <td>${sxLabel}</td>
           <td class="actions">
             <a class="btn btn-link btn-sm" href="order-detail.html?id=${o.id}">Chi tiết</a>
-            ${o.status === "pending" ? "<button class=\"btn btn-link btn-sm\" onclick=\"DTV.toast('Đã duyệt','Đơn " + o.id + " đã được phê duyệt · lệnh SX sẽ được tạo')\">Duyệt</button>" : ""}
+            ${o.status === "pending" ? `<button class="btn btn-link btn-sm" onclick="approveOrder('${o.id}')" ${approvingOrderId === o.id ? "disabled" : ""}>Duyệt</button>` : ""}
           </td>
         </tr>`;
           })
@@ -222,6 +326,7 @@
       document
         .getElementById("searchInput")
         .addEventListener("input", renderTable);
+      renderStats();
       renderTable();
     </script>
   </body>

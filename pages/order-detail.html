@@ -7,6 +7,139 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={corePlugins:{preflight:false}}</script>
   <link rel="stylesheet" href="../assets/css/main.css">
+  <style>
+    .action-loading {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease, visibility 0.15s ease;
+    }
+    .action-loading.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .action-loading-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.72);
+    }
+    .action-loading-box {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 28px 36px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+    .action-loading-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e8e8e8;
+      border-top-color: var(--primary, #a7192d);
+      border-radius: 50%;
+      animation: action-spin 0.7s linear infinite;
+    }
+    .action-loading-text {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-secondary, #666);
+    }
+    @keyframes action-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .order-timeline {
+      padding: 8px 12px 4px;
+    }
+    .order-timeline-track {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .order-timeline-track::before {
+      content: "";
+      position: absolute;
+      top: 18px;
+      left: calc(12.5% + 8px);
+      right: calc(12.5% + 8px);
+      height: 2px;
+      background: var(--border-secondary, #e8e8e8);
+      z-index: 0;
+    }
+    .order-timeline-fill {
+      position: absolute;
+      top: 18px;
+      left: calc(12.5% + 8px);
+      height: 2px;
+      background: var(--primary, #a7192d);
+      z-index: 1;
+      transition: width 0.4s ease;
+      max-width: calc(75% - 16px);
+    }
+    .order-timeline-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
+      min-width: 0;
+    }
+    .order-timeline-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      border: 2px solid var(--border-secondary, #e8e8e8);
+      background: #fff;
+      color: var(--text-tertiary, #999);
+      transition: all 0.3s ease;
+    }
+    .order-timeline-step.done .order-timeline-dot {
+      background: var(--primary, #a7192d);
+      border-color: var(--primary, #a7192d);
+      color: #fff;
+    }
+    .order-timeline-step.active .order-timeline-dot {
+      background: #fff;
+      border-color: var(--primary, #a7192d);
+      color: var(--primary, #a7192d);
+      box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.15);
+    }
+    .order-timeline-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-tertiary, #999);
+      text-align: center;
+      line-height: 1.3;
+      transition: color 0.3s ease;
+    }
+    .order-timeline-step.done .order-timeline-label,
+    .order-timeline-step.active .order-timeline-label {
+      color: var(--text, #1a1a1a);
+    }
+    .order-timeline-step.active .order-timeline-label {
+      color: var(--primary, #a7192d);
+      font-weight: 600;
+    }
+    .order-timeline-step.done .order-timeline-label {
+      color: var(--text-secondary, #666);
+    }
+  </style>
 </head>
 <body>
   <div id="page-root" style="display:none">
@@ -18,16 +151,11 @@
       <div class="page-actions" id="pageActions"></div>
     </div>
 
-    <div class="demo-banner">
-      <div>
-        <strong>Luồng liên kết đơn hàng → sản xuất</strong>
-        <p>
-          Khi đại lý đặt đơn và được duyệt, hệ thống tự tạo lệnh sản xuất tương ứng (xem panel bên dưới).
-        </p>
+    <div class="card mb-24">
+      <div class="card-body">
+        <div class="order-timeline" id="orderSteps"></div>
       </div>
     </div>
-
-    <div class="steps mb-24" id="orderSteps"></div>
 
     <div class="grid grid-4 mb-24" id="statRow"></div>
 
@@ -71,6 +199,14 @@
     </div>
   </div>
 
+  <div class="action-loading" id="actionLoading" aria-hidden="true">
+    <div class="action-loading-backdrop"></div>
+    <div class="action-loading-box">
+      <div class="action-loading-spinner"></div>
+      <p class="action-loading-text" id="actionLoadingText">Đang xử lý...</p>
+    </div>
+  </div>
+
   <div class="modal" id="modalApprove">
     <div class="modal-header">
       <h3 class="modal-title">Phê duyệt đơn hàng</h3>
@@ -97,7 +233,40 @@
       productId: p.id, name: p.name, sku: p.sku, qty: Math.ceil(order.items / 3) || 1,
       weight: p.weight, unitPrice: p.price, total: p.price * (Math.ceil(order.items / 3) || 1)
     }));
-    const production = DTV.production.filter(p => p.orderId === order.id);
+
+    const ACTION_LOADING_MS = 800;
+    let actionBusy = false;
+
+    // Giả lập luồng trạng thái cục bộ — không phụ thuộc mock data
+    const demoState = {
+      status: "ready_to_ship",
+      shipment: "pending",
+      approvedAt: order.approvedAt || order.createdAt,
+      productionDoneAt: new Date(new Date(order.createdAt).getTime() + 86400000).toISOString(),
+      shippedAt: null,
+      completedAt: null,
+    };
+
+    function getSimulatedProduction() {
+      const fromMock = DTV.production.filter(p => p.orderId === order.id);
+      if (fromMock.length) {
+        return fromMock.map(p => ({
+          ...p,
+          stage: "completed",
+          progress: 100,
+          assignee: p.assignee === "—" ? "Thợ Nguyễn Văn A" : p.assignee,
+        }));
+      }
+      return [{
+        id: "SX-" + order.id.replace("DTV-", ""),
+        product: items.map(i => `${i.name} ×${i.qty}`).join(", "),
+        stage: "completed",
+        assignee: "Thợ Nguyễn Văn A",
+        progress: 100,
+        eta: demoState.productionDoneAt.slice(0, 10),
+        factory: "Xưởng 1",
+      }];
+    }
 
     DTV.renderLayout({
       active: "orders",
@@ -106,105 +275,210 @@
     });
     document.querySelector("#modalApprove .modal-close").innerHTML = DTV.ICONS.close;
 
-    document.getElementById("pageTitle").textContent = order.id;
-    document.getElementById("pageDesc").innerHTML = `${order.customer} · ${DTV.formatDateTime(order.createdAt)} · ${DTV.tag(order.status)}`;
+    function setActionLoading(show, text) {
+      const el = document.getElementById("actionLoading");
+      if (text) document.getElementById("actionLoadingText").textContent = text;
+      el.classList.toggle("open", show);
+      el.setAttribute("aria-hidden", show ? "false" : "true");
+    }
 
-    document.getElementById("pageActions").innerHTML = `
-      <button class="btn btn-default" onclick="location.href='orders.html'">← Quay lại</button>
-      ${order.status === "pending" ? '<button class="btn btn-primary" onclick="document.getElementById(\'approveOrderId\').textContent=\'' + order.id + '\';DTV.openModal(\'modalApprove\')">Phê duyệt</button>' : ""}
-      <button class="btn btn-default" onclick="DTV.toast('In đơn','Đang tạo PDF...','info')">In đơn hàng</button>`;
+    function getStepStates(status) {
+      const stepLabels = ["Chờ duyệt", "Sản xuất", "Vận chuyển", "Hoàn thành"];
+      const statusToActive = {
+        pending: 0,
+        producing: 1,
+        ready_to_ship: 1,
+        shipping: 2,
+        completed: 3,
+        cancelled: 0,
+      };
+      const activeIdx = statusToActive[status] ?? 0;
 
-    const stepOrder = ["pending", "producing", "shipping", "completed"];
-    const currentIdx = stepOrder.indexOf(order.status === "cancelled" ? "pending" : order.status);
-    const stepLabels = ["Chờ duyệt", "Sản xuất", "Vận chuyển", "Hoàn thành"];
-    document.getElementById("orderSteps").innerHTML = stepLabels.map((l, i) => `
-      <div class="step-item ${i < currentIdx ? "done" : i === currentIdx ? "active" : ""}">
-        <div class="step-icon">${i + 1}</div>
-        <div class="step-label">${l}</div>
-      </div>`).join("");
+      if (status === "completed") {
+        return stepLabels.map((label) => ({ label, state: "done" }));
+      }
 
-    document.getElementById("statRow").innerHTML = [
-      { label: "Tổng đơn", value: DTV.formatMoney(order.total) },
-      { label: "Đã thanh toán", value: DTV.formatMoney(order.paid) },
-      { label: "Còn nợ", value: DTV.formatMoney(order.debt) },
-      { label: "Sản phẩm", value: order.items + " món" },
-    ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value" style="font-size:18px">${s.value}</div></div>`).join("");
+      return stepLabels.map((label, i) => ({
+        label,
+        state: i < activeIdx ? "done" : i === activeIdx ? "active" : "pending",
+      }));
+    }
 
-    document.getElementById("customerInfo").innerHTML = customer ? `
-      <div class="desc-list">
-        <div class="desc-item"><div class="desc-label">Đại lý</div><div class="desc-value"><a href="customer-detail.html?id=${customer.id}">${customer.name}</a></div></div>
-        <div class="desc-item"><div class="desc-label">Liên hệ</div><div class="desc-value">${customer.contact} · ${customer.phone}</div></div>
-        <div class="desc-item"><div class="desc-label">Địa chỉ</div><div class="desc-value">${customer.address}, ${customer.district}, ${customer.city}</div></div>
-        <div class="desc-item"><div class="desc-label">Hạng</div><div class="desc-value">${DTV.tag(customer.tier)}</div></div>
-      </div>` : `<p class="cell-muted">${order.customer}</p>`;
+    function getTimelineFillPercent(status) {
+      if (status === "completed") return 100;
+      const statusToActive = {
+        pending: 0,
+        producing: 1,
+        ready_to_ship: 1,
+        shipping: 2,
+        cancelled: 0,
+      };
+      const activeIdx = statusToActive[status] ?? 0;
+      return (activeIdx / 3) * 100;
+    }
 
-    document.getElementById("paymentInfo").innerHTML = `
-      <div class="desc-list">
-        <div class="desc-item"><div class="desc-label">Trạng thái TT</div><div class="desc-value">${DTV.tag(order.payment)}</div></div>
-        <div class="desc-item"><div class="desc-label">Đã TT</div><div class="desc-value cell-money">${DTV.formatMoney(order.paid)}</div></div>
-        <div class="desc-item"><div class="desc-label">Còn nợ</div><div class="desc-value cell-money text-error">${DTV.formatMoney(order.debt)}</div></div>
-        <div class="desc-item"><div class="desc-label">Phê duyệt</div><div class="desc-value">${order.approvedAt ? DTV.formatDateTime(order.approvedAt) : "Chưa duyệt"}</div></div>
-      </div>
-      <div class="mt-16"><div class="progress" style="height:8px"><div class="progress-bar" style="width:${Math.round(order.paid/order.total*100)}%"></div></div>
-      <div class="cell-muted" style="font-size:12px;margin-top:4px">${Math.round(order.paid/order.total*100)}% đã thanh toán</div></div>`;
+    function renderOrderSteps() {
+      const states = getStepStates(demoState.status);
+      const fillPercent = getTimelineFillPercent(demoState.status);
 
-    document.getElementById("itemCount").textContent = items.length + " dòng";
-    document.getElementById("itemTable").innerHTML = items.map(it => `
-      <tr>
-        <td>
-          <a href="product-detail.html?id=${it.productId}">${it.name}</a>
-          ${it.engravingText ? `<div class="cell-muted" style="font-size:12px;margin-top:4px">Khắc tên: <strong style="color:var(--primary)">${it.engravingText}</strong>${it.engravingFee ? " · +" + DTV.formatMoney(it.engravingFee) : ""}</div>` : ""}
-        </td>
-        <td class="cell-muted">${it.sku}</td>
-        <td>${it.qty}</td>
-        <td>${it.weight}</td>
-        <td class="cell-money">${DTV.formatMoney(it.unitPrice)}</td>
-        <td class="cell-money fw-500">${DTV.formatMoney(it.total)}</td>
-      </tr>`).join("") + `
-      <tr style="background:var(--bg-secondary)">
-        <td colspan="5" class="text-right fw-500">Tổng cộng</td>
-        <td class="cell-money fw-500">${DTV.formatMoney(order.total)}</td>
-      </tr>`;
+      document.getElementById("orderSteps").innerHTML = `
+        <div class="order-timeline-track">
+          <div class="order-timeline-fill" style="width: ${fillPercent * 0.75}%"></div>
+          ${states.map((s, i) => `
+            <div class="order-timeline-step ${s.state}">
+              <div class="order-timeline-dot">${s.state === "done" ? "✓" : i + 1}</div>
+              <div class="order-timeline-label">${s.label}</div>
+            </div>`).join("")}
+        </div>`;
+    }
 
-    document.getElementById("productionPanel").innerHTML = production.length ? `
-      <div class="mb-16" style="padding:10px 12px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:6px;font-size:13px">
-        ✓ Lệnh SX được <strong>tự tạo</strong> từ đơn ${order.id}
-        · <a href="production.html?order=${order.id}">Xem trên bảng SX</a>
-      </div>
-      ${production.map(p => `
-      <div style="padding:12px 0;border-bottom:1px solid var(--border)">
-        <div class="flex gap-8" style="justify-content:space-between;margin-bottom:8px">
-          <span class="fw-500">${p.product}</span>
-          ${DTV.tag(p.stage)}
+    function renderActionButton() {
+      if (demoState.status === "ready_to_ship") {
+        return `<button class="btn btn-primary" onclick="shipOrder()">Giao hàng</button>`;
+      }
+      if (demoState.status === "shipping") {
+        return `<button class="btn btn-primary" onclick="completeOrder()">Hoàn thành</button>`;
+      }
+      return "";
+    }
+
+    function renderPage() {
+      const production = getSimulatedProduction();
+
+      document.getElementById("pageTitle").textContent = order.id;
+      document.getElementById("pageDesc").innerHTML = `${order.customer} · ${DTV.formatDateTime(order.createdAt)} · ${DTV.tag(demoState.status)}`;
+
+      document.getElementById("pageActions").innerHTML = `
+        <button class="btn btn-default" onclick="location.href='orders.html'">← Quay lại</button>
+        ${renderActionButton()}
+        <button class="btn btn-default" onclick="printOrder()">In đơn hàng</button>`;
+
+      renderOrderSteps();
+
+      document.getElementById("statRow").innerHTML = [
+        { label: "Tổng đơn", value: DTV.formatMoney(order.total) },
+        { label: "Đã thanh toán", value: DTV.formatMoney(order.paid) },
+        { label: "Còn nợ", value: DTV.formatMoney(order.debt) },
+        { label: "Sản phẩm", value: order.items + " món" },
+      ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value" style="font-size:18px">${s.value}</div></div>`).join("");
+
+      document.getElementById("customerInfo").innerHTML = customer ? `
+        <div class="desc-list">
+          <div class="desc-item"><div class="desc-label">Đại lý</div><div class="desc-value"><a href="customer-detail.html?id=${customer.id}">${customer.name}</a></div></div>
+          <div class="desc-item"><div class="desc-label">Liên hệ</div><div class="desc-value">${customer.contact} · ${customer.phone}</div></div>
+          <div class="desc-item"><div class="desc-label">Địa chỉ</div><div class="desc-value">${customer.address}, ${customer.district}, ${customer.city}</div></div>
+          <div class="desc-item"><div class="desc-label">Hạng</div><div class="desc-value">${DTV.tag(customer.tier)}</div></div>
+        </div>` : `<p class="cell-muted">${order.customer}</p>`;
+
+      document.getElementById("paymentInfo").innerHTML = `
+        <div class="desc-list">
+          <div class="desc-item"><div class="desc-label">Trạng thái TT</div><div class="desc-value">${DTV.tag(order.payment)}</div></div>
+          <div class="desc-item"><div class="desc-label">Đã TT</div><div class="desc-value cell-money">${DTV.formatMoney(order.paid)}</div></div>
+          <div class="desc-item"><div class="desc-label">Còn nợ</div><div class="desc-value cell-money text-error">${DTV.formatMoney(order.debt)}</div></div>
+          <div class="desc-item"><div class="desc-label">Phê duyệt</div><div class="desc-value">${DTV.formatDateTime(demoState.approvedAt)}</div></div>
         </div>
-        <div class="cell-muted" style="font-size:12px;margin-bottom:8px">${p.id} · ${p.assignee} · ${p.factory}</div>
-        <div class="progress"><div class="progress-bar" style="width:${p.progress}%"></div></div>
-        <div class="cell-muted" style="font-size:12px;margin-top:4px">${p.progress}% · Dự kiến ${DTV.formatDate(p.eta)}</div>
-      </div>`).join("")}` : `<div class="empty-state"><div class="empty-state-title">${DTV.tag(order.production)} Chưa có lệnh SX</div><p class="cell-muted" style="margin-top:8px">Sau khi duyệt đơn, lệnh SX sẽ được tạo tự động.</p></div>`;
+        <div class="mt-16"><div class="progress" style="height:8px"><div class="progress-bar" style="width:${Math.round(order.paid/order.total*100)}%"></div></div>
+        <div class="cell-muted" style="font-size:12px;margin-top:4px">${Math.round(order.paid/order.total*100)}% đã thanh toán</div></div>`;
 
-    const shipLabels = { pending: "Chờ giao hàng", packing: "Đang đóng gói", in_transit: "Đang vận chuyển", delivered: "Đã giao hàng", cancelled: "Đã hủy" };
-    document.getElementById("shipmentPanel").innerHTML = `
-      <div class="desc-list">
-        <div class="desc-item"><div class="desc-label">Trạng thái</div><div class="desc-value">${DTV.tag(order.shipment)}</div></div>
-        <div class="desc-item"><div class="desc-label">Mô tả</div><div class="desc-value">${shipLabels[order.shipment] || order.shipment}</div></div>
-        <div class="desc-item"><div class="desc-label">Địa chỉ giao</div><div class="desc-value">${customer ? customer.address + ", " + customer.city : "—"}</div></div>
-        <div class="desc-item"><div class="desc-label">Vận chuyển</div><div class="desc-value">Giao hàng nội thành / Viettel Post</div></div>
-      </div>`;
+      document.getElementById("itemCount").textContent = items.length + " dòng";
+      document.getElementById("itemTable").innerHTML = items.map(it => `
+        <tr>
+          <td>
+            <a href="product-detail.html?id=${it.productId}">${it.name}</a>
+            ${it.engravingText ? `<div class="cell-muted" style="font-size:12px;margin-top:4px">Khắc tên: <strong style="color:var(--primary)">${it.engravingText}</strong>${it.engravingFee ? " · +" + DTV.formatMoney(it.engravingFee) : ""}</div>` : ""}
+          </td>
+          <td class="cell-muted">${it.sku}</td>
+          <td>${it.qty}</td>
+          <td>${it.weight}</td>
+          <td class="cell-money">${DTV.formatMoney(it.unitPrice)}</td>
+          <td class="cell-money fw-500">${DTV.formatMoney(it.total)}</td>
+        </tr>`).join("") + `
+        <tr style="background:var(--bg-secondary)">
+          <td colspan="5" class="text-right fw-500">Tổng cộng</td>
+          <td class="cell-money fw-500">${DTV.formatMoney(order.total)}</td>
+        </tr>`;
 
-    const events = [
-      { time: order.createdAt, text: "Đơn hàng được tạo bởi đại lý" },
-      order.approvedAt && { time: order.approvedAt, text: "Đơn hàng được phê duyệt" },
-      order.status !== "pending" && { time: order.approvedAt || order.createdAt, text: "Chuyển sang sản xuất" },
-      ["shipping","completed"].includes(order.status) && { time: "2026-07-14T10:00:00", text: "Hoàn thành sản xuất, chuyển giao hàng" },
-      order.status === "completed" && { time: "2026-07-12T16:00:00", text: "Giao hàng thành công" },
-      order.status === "cancelled" && { time: order.createdAt, text: "Đơn hàng đã bị hủy" },
-    ].filter(Boolean);
+      document.getElementById("productionPanel").innerHTML = production.length ? `
+        <div class="mb-16" style="padding:10px 12px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:6px;font-size:13px">
+          ✓ Lệnh SX được <strong>tự tạo</strong> từ đơn ${order.id}
+          · <a href="production.html?order=${order.id}">Xem trên bảng SX</a>
+        </div>
+        ${production.map(p => `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+          <div class="flex gap-8" style="justify-content:space-between;margin-bottom:8px">
+            <span class="fw-500">${p.product}</span>
+            ${DTV.tag(p.stage)}
+          </div>
+          <div class="cell-muted" style="font-size:12px;margin-bottom:8px">${p.id} · ${p.assignee} · ${p.factory}</div>
+          <div class="progress"><div class="progress-bar" style="width:${p.progress}%"></div></div>
+          <div class="cell-muted" style="font-size:12px;margin-top:4px">${p.progress}% · Dự kiến ${DTV.formatDate(p.eta)}</div>
+        </div>`).join("")}` : `<div class="empty-state"><div class="empty-state-title">${DTV.tag("completed")} Đã hoàn thành SX</div><p class="cell-muted" style="margin-top:8px">Lệnh sản xuất đã xong, sẵn sàng giao hàng.</p></div>`;
 
-    document.getElementById("timelinePanel").innerHTML = `<div class="timeline">${events.map(e => `
-      <div class="timeline-item">
-        <div class="timeline-time">${DTV.formatDateTime(e.time)}</div>
-        <div class="timeline-content">${e.text}</div>
-      </div>`).join("")}</div>`;
+      const shipLabels = { pending: "Chờ giao hàng", packing: "Đang đóng gói", in_transit: "Đang vận chuyển", delivered: "Đã giao hàng", cancelled: "Đã hủy" };
+      document.getElementById("shipmentPanel").innerHTML = `
+        <div class="desc-list">
+          <div class="desc-item"><div class="desc-label">Trạng thái</div><div class="desc-value">${DTV.tag(demoState.shipment)}</div></div>
+          <div class="desc-item"><div class="desc-label">Mô tả</div><div class="desc-value">${shipLabels[demoState.shipment] || demoState.shipment}</div></div>
+          <div class="desc-item"><div class="desc-label">Địa chỉ giao</div><div class="desc-value">${customer ? customer.address + ", " + customer.city : "—"}</div></div>
+          <div class="desc-item"><div class="desc-label">Vận chuyển</div><div class="desc-value">Giao hàng nội thành / Viettel Post</div></div>
+        </div>`;
+
+      const events = [
+        { time: order.createdAt, text: "Đơn hàng được tạo bởi đại lý" },
+        { time: demoState.approvedAt, text: "Đơn hàng được phê duyệt" },
+        { time: demoState.approvedAt, text: "Chuyển sang sản xuất" },
+        { time: demoState.productionDoneAt, text: "Hoàn thành sản xuất, chuyển giao hàng" },
+        ["shipping", "completed"].includes(demoState.status) && demoState.shippedAt && { time: demoState.shippedAt, text: "Bắt đầu giao hàng cho đại lý" },
+        demoState.status === "completed" && demoState.completedAt && { time: demoState.completedAt, text: "Giao hàng thành công" },
+      ].filter(Boolean);
+
+      document.getElementById("timelinePanel").innerHTML = `<div class="timeline">${events.map(e => `
+        <div class="timeline-item">
+          <div class="timeline-time">${DTV.formatDateTime(e.time)}</div>
+          <div class="timeline-content">${e.text}</div>
+        </div>`).join("")}</div>`;
+    }
+
+    function printOrder() {
+      DTV.toast("In đơn hàng", "Đang tạo bản xem trước PDF...", "info");
+      setTimeout(() => {
+        location.href = "order-print.html?id=" + encodeURIComponent(order.id);
+      }, 500);
+    }
+
+    function shipOrder() {
+      if (actionBusy || demoState.status !== "ready_to_ship") return;
+      actionBusy = true;
+      setActionLoading(true, "Đang giao hàng...");
+
+      setTimeout(() => {
+        demoState.status = "shipping";
+        demoState.shipment = "in_transit";
+        demoState.shippedAt = new Date().toISOString();
+        actionBusy = false;
+        setActionLoading(false);
+        DTV.toast("Giao hàng", `Đơn ${order.id} đang được giao`);
+        renderPage();
+      }, ACTION_LOADING_MS);
+    }
+
+    function completeOrder() {
+      if (actionBusy || demoState.status !== "shipping") return;
+      actionBusy = true;
+      setActionLoading(true, "Đang hoàn thành đơn...");
+
+      setTimeout(() => {
+        demoState.status = "completed";
+        demoState.shipment = "delivered";
+        demoState.completedAt = new Date().toISOString();
+        actionBusy = false;
+        setActionLoading(false);
+        DTV.toast("Hoàn thành", `Đơn ${order.id} đã giao thành công`);
+        renderPage();
+      }, ACTION_LOADING_MS);
+    }
+
+    renderPage();
   </script>
 </body>
 </html>

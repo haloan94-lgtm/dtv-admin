@@ -65,7 +65,7 @@
 
   DTV.logout = function () {
     try {
-      localStorage.removeItem(DTV.AUTH_KEY);
+      localStorage.clear();
     } catch (e) {}
     // Hard navigation — không dùng SPA, tránh CSS/login lệch path trên static.app
     DTV.hardRedirect(DTV.absoluteUrl("login.html"));

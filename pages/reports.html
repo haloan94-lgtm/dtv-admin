@@ -77,7 +77,7 @@
       { label: "Tổng đại lý", value: dash.totalDealers },
     ].map(s => `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value ${s.cls || ''}" style="font-size:20px">${s.value}</div></div>`).join("");
 
-    DTV.renderBarChart("revenueChart", dash.monthlyRevenueChart, { color: "#c9a227" });
+    DTV.renderBarChart("revenueChart", dash.monthlyRevenueChart, { color: "#a7192d" });
     DTV.renderBarChart("orderChart", dash.orderChart, { color: "#1677ff" });
 
     const topCust = [...DTV.customers].sort((a,b) => b.totalSpent - a.totalSpent).slice(0, 5);

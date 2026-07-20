@@ -9,6 +9,57 @@
       tailwind.config = { corePlugins: { preflight: false } };
     </script>
     <link rel="stylesheet" href="../assets/css/main.css" />
+    <style>
+      .stage-loading {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.15s ease, visibility 0.15s ease;
+      }
+      .stage-loading.open {
+        opacity: 1;
+        visibility: visible;
+      }
+      .stage-loading-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.72);
+      }
+      .stage-loading-box {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 28px 36px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      }
+      .stage-loading-spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #e8e8e8;
+        border-top-color: var(--primary, #a7192d);
+        border-radius: 50%;
+        animation: stage-spin 0.7s linear infinite;
+      }
+      .stage-loading-text {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-secondary, #666);
+      }
+      @keyframes stage-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="page-root" style="display: none">
@@ -48,9 +99,9 @@
               <option value="queue">Chờ SX</option>
               <option value="casting">Đúc</option>
               <option value="crafting">Gia công</option>
-              <option value="polishing">Đánh bóng</option>
-              <option value="setting">Gắn đá</option>
-              <option value="qc">Kiểm tra</option>
+              <option value="polishing">Đánh bóng và Gắn Đá</option>
+              <option value="setting">Kiểm tra</option>
+              <option value="completed">Hoàn thành sản xuất</option>
             </select>
           </div>
           <div class="filter-item">
@@ -81,6 +132,14 @@
             </thead>
             <tbody id="listTable"></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="stage-loading" id="stageLoading" aria-hidden="true">
+        <div class="stage-loading-backdrop"></div>
+        <div class="stage-loading-box">
+          <div class="stage-loading-spinner"></div>
+          <p class="stage-loading-text" id="stageLoadingText">Đang cập nhật công đoạn...</p>
         </div>
       </div>
     </div>
@@ -169,96 +228,353 @@
         .map((p) => `<option>${p.name}</option>`)
         .join("");
 
+      const STAGE_UPDATE_MS = 500;
+      let isStageUpdating = false;
+      let draggedCardId = null;
+
       const focusOrder = new URLSearchParams(location.search).get("order");
-      if (focusOrder) {
-        const banner = document.getElementById("demoBanner");
-        if (banner) {
-          banner.innerHTML = `<div>
-          <strong>Đang xem lệnh từ đơn ${focusOrder}</strong>
-          <p>Các thẻ liên quan được làm nổi bên dưới. <a href="order-detail.html?id=${focusOrder}">Mở chi tiết đơn</a></p>
-        </div>`;
-        }
-      }
 
       const stages = [
         { id: "queue", label: "Chờ SX" },
         { id: "casting", label: "Đúc" },
         { id: "crafting", label: "Gia công" },
-        { id: "polishing", label: "Đánh bóng" },
-        { id: "setting", label: "Gắn đá" },
-        { id: "qc", label: "Kiểm tra" },
+        { id: "polishing", label: "Đánh bóng và Gắn Đá" },
+        { id: "setting", label: "Kiểm tra" },
+        { id: "completed", label: "Hoàn thành sản xuất" },
       ];
 
-      document.getElementById("statRow").innerHTML = [
-        { label: "Tổng lệnh SX", value: DTV.production.length },
-        {
-          label: "Đang làm",
-          value: DTV.production.filter((p) => p.stage !== "queue").length,
-        },
-        {
-          label: "Khẩn cấp",
-          value: DTV.production.filter((p) => p.priority === "urgent").length,
-        },
-        { label: "Hoàn thành tuần", value: 12 },
-      ]
-        .map(
-          (s) =>
-            `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value" style="font-size:28px">${s.value}</div></div>`,
-        )
-        .join("");
+      const stageAssignees = {
+        casting: "Thợ Lê Văn C",
+        crafting: "Thợ Nguyễn Văn A",
+        polishing: "Thợ Trần Thị B",
+        setting: "QC Vũ Văn F",
+        completed: "QC Vũ Văn F",
+      };
+
+      const cardPriorities = Object.fromEntries(
+        DTV.production.map((p) => [p.id, p.priority]),
+      );
+
+      const priorityTagMap = {
+        urgent: { label: "Khẩn cấp", class: "tag-error" },
+        high: { label: "Cao", class: "tag-warning" },
+        normal: { label: "Thường", class: "tag-default" },
+      };
+
+      function priorityTag(priority) {
+        const s = priorityTagMap[priority];
+        if (!s) {
+          return `<span class="tag tag-default">${priority || "—"}</span>`;
+        }
+        return `<span class="tag ${s.class}">${s.label}</span>`;
+      }
+
+      function assigneeForStage(stageId) {
+        return stageAssignees[normalizeStage(stageId)] || "Thợ phân công";
+      }
+
+      function shouldAssignWorker(stageId) {
+        return stageIndex(stageId) >= 1;
+      }
+
+      function normalizeStage(stageId) {
+        return stageId === "qc" ? "completed" : stageId;
+      }
+
+      function progressForStage(stageId) {
+        const id = normalizeStage(stageId);
+        if (id === "completed") return 100;
+        const idx = stages.findIndex((s) => s.id === id);
+        if (idx <= 0) return 0;
+        return Math.round((idx / (stages.length - 1)) * 100);
+      }
+
+      function stageLabel(stageId) {
+        const id = normalizeStage(stageId);
+        return stages.find((s) => s.id === id)?.label || stageId;
+      }
+
+      function stageTag(stageId) {
+        const id = normalizeStage(stageId);
+        const tagClass =
+          {
+            queue: "tag-default",
+            casting: "tag-info",
+            crafting: "tag-processing",
+            polishing: "tag-info",
+            setting: "tag-gold",
+            completed: "tag-success",
+          }[id] || "tag-default";
+        return `<span class="tag ${tagClass}">${stageLabel(id)}</span>`;
+      }
+
+      function stageIndex(stageId) {
+        return stages.findIndex((s) => s.id === normalizeStage(stageId));
+      }
+
+      function getNextStageId(stageId) {
+        const idx = stageIndex(stageId);
+        if (idx < 0 || idx >= stages.length - 1) return null;
+        return stages[idx + 1].id;
+      }
+
+      function canAdvanceToStage(fromStage, toStage) {
+        return stageIndex(toStage) === stageIndex(fromStage) + 1;
+      }
+
+      function clearDropHints() {
+        document.querySelectorAll(".kanban-col-body").forEach((el) => {
+          el.classList.remove("drag-over", "drop-valid", "drop-invalid");
+        });
+      }
+
+      function setStageLoading(show, text) {
+        const el = document.getElementById("stageLoading");
+        if (text) document.getElementById("stageLoadingText").textContent = text;
+        el.classList.toggle("open", show);
+        el.setAttribute("aria-hidden", show ? "false" : "true");
+      }
+
+      function renderStats() {
+        document.getElementById("statRow").innerHTML = [
+          { label: "Tổng lệnh SX", value: DTV.production.length },
+          {
+            label: "Đang làm",
+            value: DTV.production.filter(
+              (p) => p.stage !== "queue" && p.stage !== "completed" && p.stage !== "qc",
+            ).length,
+          },
+          {
+            label: "Khẩn cấp",
+            value: DTV.production.filter((p) => p.priority === "urgent").length,
+          },
+          { label: "Hoàn thành tuần", value: 12 },
+        ]
+          .map(
+            (s) =>
+              `<div class="stat-card"><div class="stat-label">${s.label}</div><div class="stat-value" style="font-size:28px">${s.value}</div></div>`,
+          )
+          .join("");
+      }
+
+      renderStats();
+
+      function renderKanbanCard(p) {
+        const stage = normalizeStage(p.stage);
+        const isCompleted = stage === "completed";
+        const progress = isCompleted ? 100 : p.progress;
+        const hasAssignee = p.assignee && p.assignee !== "—";
+        const priority = cardPriorities[p.id] ?? p.priority;
+        return `
+              <div class="kanban-card${isCompleted ? " completed" : ""}" id="card-${p.id}" draggable="${!isCompleted}" data-id="${p.id}">
+                <div class="flex gap-8" style="justify-content:space-between;margin-bottom:6px">
+                  <span class="kanban-card-title" style="margin-bottom:0;font-size:13px">${p.id}</span>
+                  ${priorityTag(priority)}
+                </div>
+                <div class="kanban-card-title" style="font-size:13px">${p.product}</div>
+                <a href="order-detail.html?id=${p.orderId}" class="kanban-card-meta kanban-card-link" draggable="false">
+                  <span class="kanban-meta-icon" aria-hidden="true">${DTV.ICONS.orders}</span>
+                  <span>${p.orderId} · ${p.customer}</span>
+                </a>
+                ${hasAssignee ? `<div class="kanban-card-meta"><span class="kanban-meta-icon" aria-hidden="true">${DTV.ICONS.users}</span><span>${p.assignee}</span></div>` : ""}
+                <div class="progress" style="height:4px;margin:8px 0"><div class="progress-bar${isCompleted ? " success" : ""}" data-progress="${p.id}" style="width:${progress}%"></div></div>
+                <div class="kanban-card-meta">Dự kiến ${DTV.formatDate(p.eta)} · ${progress}%</div>
+              </div>`;
+      }
 
       function renderKanban() {
         document.getElementById("kanbanBoard").innerHTML = stages
           .map((st) => {
-            const cards = DTV.production.filter((p) => p.stage === st.id);
+            const cards = DTV.production.filter(
+              (p) => normalizeStage(p.stage) === st.id,
+            );
             return `
-          <div class="kanban-col">
+          <div class="kanban-col" data-stage="${st.id}">
             <div class="kanban-col-header">
               <span>${st.label}</span>
-              <span class="tag tag-default">${cards.length}</span>
+              <span class="tag tag-default" data-count="${st.id}">${cards.length}</span>
             </div>
-            ${cards
-              .map(
-                (p) => `
-              <div class="kanban-card" style="${focusOrder && p.orderId === focusOrder ? "outline:2px solid #faad14;background:#fffbe6" : ""}" onclick="DTV.toast('${p.id}','${p.product} — từ đơn ${p.orderId}')">
-                <div class="flex gap-8" style="justify-content:space-between;margin-bottom:6px">
-                  <span class="fw-500" style="font-size:13px">${p.id}</span>
-                  ${DTV.tag(p.priority)}
-                </div>
-                <div style="font-size:13px;margin-bottom:4px">${p.product}</div>
-                <div class="cell-muted" style="font-size:11px;margin-bottom:8px">${p.orderId} · ${p.customer}</div>
-                <div class="progress" style="height:4px"><div class="progress-bar" style="width:${p.progress}%"></div></div>
-                <div class="cell-muted" style="font-size:11px;margin-top:6px">${p.assignee} · Dự kiến ${DTV.formatDate(p.eta)}</div>
-              </div>`,
-              )
-              .join("")}
+            <div class="kanban-col-body" data-stage="${st.id}">
+            ${cards.map((p) => renderKanbanCard(p)).join("")}
+            </div>
           </div>`;
           })
           .join("");
+      }
+
+      function moveCardToStage(cardId, newStage) {
+        const item = DTV.production.find((p) => p.id === cardId);
+        if (!item || normalizeStage(item.stage) === newStage || isStageUpdating)
+          return;
+
+        if (!canAdvanceToStage(item.stage, newStage)) {
+          DTV.toast(
+            "Không thể chuyển",
+            "Chỉ được kéo thả lần lượt sang cột kế bên phải",
+            "warning",
+          );
+          return;
+        }
+
+        const fromLabel = stageLabel(item.stage);
+        const toLabel = stageLabel(newStage);
+        const nextAssignee = shouldAssignWorker(newStage)
+          ? assigneeForStage(newStage)
+          : null;
+
+        isStageUpdating = true;
+        document.getElementById("card-" + cardId)?.classList.add("updating");
+        setStageLoading(
+          true,
+          nextAssignee
+            ? `Đang phân công ${nextAssignee} · ${fromLabel} → ${toLabel}...`
+            : `Đang chuyển ${cardId} · ${fromLabel} → ${toLabel}...`,
+        );
+
+        setTimeout(() => {
+          const lockedPriority = cardPriorities[cardId] ?? item.priority;
+          item.stage = newStage;
+          item.progress = progressForStage(newStage);
+          if (nextAssignee) item.assignee = nextAssignee;
+          item.priority = lockedPriority;
+
+          setStageLoading(false);
+          isStageUpdating = false;
+
+          renderKanban();
+          renderStats();
+          if (document.getElementById("listView").style.display !== "none") {
+            renderList();
+          }
+
+          DTV.toast(
+            "Đã cập nhật",
+            nextAssignee
+              ? `${cardId} · ${toLabel} · ${nextAssignee} · tiến độ ${item.progress}%`
+              : `${cardId} · ${toLabel} · tiến độ ${item.progress}%`,
+          );
+
+          if (focusOrder) {
+            requestAnimationFrame(() => {
+              document
+                .getElementById("card-" + cardId)
+                ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            });
+          }
+        }, STAGE_UPDATE_MS);
+      }
+
+      function initKanbanDnD() {
+        const board = document.getElementById("kanbanBoard");
+        if (board.dataset.dndInit) return;
+        board.dataset.dndInit = "1";
+
+        board.addEventListener("dragstart", (e) => {
+          if (e.target.closest("a")) {
+            e.preventDefault();
+            return;
+          }
+          const card = e.target.closest(".kanban-card");
+          if (!card || isStageUpdating) {
+            e.preventDefault();
+            return;
+          }
+          const item = DTV.production.find((p) => p.id === card.dataset.id);
+          const nextStage = item ? getNextStageId(item.stage) : null;
+          if (!item || !nextStage) {
+            e.preventDefault();
+            DTV.toast(
+              "Không thể kéo",
+              item?.stage === "completed" || normalizeStage(item?.stage) === "completed"
+                ? "Lệnh đã hoàn thành"
+                : "Không thể chuyển công đoạn",
+              "warning",
+            );
+            return;
+          }
+          draggedCardId = card.dataset.id;
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", draggedCardId);
+          card.classList.add("dragging");
+          board.querySelectorAll(".kanban-col-body").forEach((col) => {
+            col.classList.remove("drop-valid", "drop-invalid");
+            if (col.dataset.stage === nextStage) {
+              col.classList.add("drop-valid");
+            } else if (col.dataset.stage !== normalizeStage(item.stage)) {
+              col.classList.add("drop-invalid");
+            }
+          });
+        });
+
+        board.addEventListener("dragend", (e) => {
+          const card = e.target.closest(".kanban-card");
+          card?.classList.remove("dragging");
+          draggedCardId = null;
+          clearDropHints();
+        });
+
+        board.addEventListener("dragover", (e) => {
+          const col = e.target.closest(".kanban-col-body");
+          if (!col || isStageUpdating || !draggedCardId) return;
+          const item = DTV.production.find((p) => p.id === draggedCardId);
+          if (!item || !canAdvanceToStage(item.stage, col.dataset.stage)) {
+            e.dataTransfer.dropEffect = "none";
+            return;
+          }
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          board.querySelectorAll(".kanban-col-body.drag-over").forEach((el) => {
+            if (el !== col) el.classList.remove("drag-over");
+          });
+          col.classList.add("drag-over");
+        });
+
+        board.addEventListener("dragleave", (e) => {
+          const col = e.target.closest(".kanban-col-body");
+          if (!col) return;
+          const related = e.relatedTarget;
+          if (!col.contains(related)) col.classList.remove("drag-over");
+        });
+
+        board.addEventListener("drop", (e) => {
+          const col = e.target.closest(".kanban-col-body");
+          if (!col || isStageUpdating) return;
+          e.preventDefault();
+          col.classList.remove("drag-over");
+          const cardId = e.dataTransfer.getData("text/plain") || draggedCardId;
+          if (cardId) moveCardToStage(cardId, col.dataset.stage);
+          draggedCardId = null;
+          clearDropHints();
+        });
       }
 
       function renderList() {
         const stage = document.getElementById("filterStage").value;
         const priority = document.getElementById("filterPriority").value;
         const data = DTV.production.filter((p) => {
-          if (stage && p.stage !== stage) return false;
+          const itemStage = normalizeStage(p.stage);
+          if (stage && itemStage !== stage) return false;
           if (priority && p.priority !== priority) return false;
           return true;
         });
         document.getElementById("listTable").innerHTML = data
           .map(
-            (p) => `
+            (p) => {
+              const itemStage = normalizeStage(p.stage);
+              const progress = itemStage === "completed" ? 100 : p.progress;
+              return `
         <tr>
           <td><a href="order-detail.html?id=${p.orderId}">${p.id}</a></td>
           <td><a href="order-detail.html?id=${p.orderId}">${p.orderId}</a></td>
           <td>${p.customer}</td>
           <td>${p.product}</td>
-          <td>${DTV.tag(p.stage)}</td>
+          <td>${stageTag(itemStage)}</td>
           <td>${p.assignee}</td>
-          <td><div class="progress" style="width:80px;display:inline-block;vertical-align:middle"><div class="progress-bar" style="width:${p.progress}%"></div></div> ${p.progress}%</td>
+          <td><div class="progress" style="width:80px;display:inline-block;vertical-align:middle"><div class="progress-bar${itemStage === "completed" ? " success" : ""}" style="width:${progress}%"></div></div> ${progress}%</td>
           <td>${DTV.formatDate(p.eta)}</td>
-          <td>${DTV.tag(p.priority)}</td>
-        </tr>`,
+          <td>${priorityTag(cardPriorities[p.id] ?? p.priority)}</td>
+        </tr>`;
+            },
           )
           .join("");
       }
@@ -281,6 +597,19 @@
         });
 
       renderKanban();
+      initKanbanDnD();
+
+      if (focusOrder) {
+        const card = DTV.production.find((p) => p.orderId === focusOrder);
+        if (card) {
+          requestAnimationFrame(() => {
+            document.getElementById("card-" + card.id)?.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
+          });
+        }
+      }
     </script>
   </body>
 </html>

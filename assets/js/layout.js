@@ -40,6 +40,8 @@ DTV.ICONS = {
     '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
   bell: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
   menu: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
+  chevronDown:
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>',
   close:
     '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
 };
@@ -288,17 +290,36 @@ DTV.bindShellEvents = () => {
       .forEach((el) => el.classList.remove("open"));
   });
 
+  const userMenu = document.getElementById("userMenu");
+  const userMenuBtn = document.getElementById("userMenuBtn");
+  const userMenuDropdown = document.getElementById("userMenuDropdown");
+
+  userMenuBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = userMenuDropdown?.classList.toggle("open");
+    userMenuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+
   document.addEventListener("click", (e) => {
-    const logout = e.target.closest('[data-menu="logout"]');
+    if (userMenu && !e.target.closest("#userMenu")) {
+      userMenuDropdown?.classList.remove("open");
+      userMenuBtn?.setAttribute("aria-expanded", "false");
+    }
+
+    const logout = e.target.closest(
+      '[data-menu="logout"], [data-action="logout"]',
+    );
     if (!logout) return;
     e.preventDefault();
     e.stopPropagation();
+    userMenuDropdown?.classList.remove("open");
+    userMenuBtn?.setAttribute("aria-expanded", "false");
     if (typeof DTV.logout === "function") {
       DTV.logout();
       return;
     }
     try {
-      localStorage.removeItem(DTV.AUTH_KEY || "dtv-admin-session");
+      localStorage.clear();
     } catch (_) {}
     const root =
       typeof DTV.getAppRoot === "function" ? DTV.getAppRoot() : "/";
@@ -371,11 +392,28 @@ DTV.renderLayout = (options = {}) => {
               ${DTV.ICONS.bell}
               <span class="badge-dot"></span>
             </button>
-            <div class="user-profile" title="Hồ sơ">
-              <div class="user-avatar">${userInitials}</div>
-              <div>
-                <div class="user-name">${userName}</div>
-                <div class="user-role">${userRole}</div>
+            <div class="user-menu" id="userMenu">
+              <button type="button" class="user-profile" id="userMenuBtn" aria-expanded="false" aria-haspopup="true" title="Tài khoản">
+                <div class="user-avatar">${userInitials}</div>
+                <div>
+                  <div class="user-name">${userName}</div>
+                  <div class="user-role">${userRole}</div>
+                </div>
+                <span class="user-menu-chevron">${DTV.ICONS.chevronDown}</span>
+              </button>
+              <div class="user-menu-dropdown" id="userMenuDropdown">
+                <div class="user-menu-header">
+                  <div class="user-avatar user-avatar-lg">${userInitials}</div>
+                  <div>
+                    <div class="user-name">${userName}</div>
+                    <div class="user-role">${userRole}</div>
+                  </div>
+                </div>
+                <div class="user-menu-divider"></div>
+                <button type="button" class="user-menu-item" data-action="logout">
+                  <span class="user-menu-item-icon">${DTV.ICONS.logout}</span>
+                  Đăng xuất
+                </button>
               </div>
             </div>
           </div>
@@ -503,12 +541,12 @@ DTV.renderLineChart = (containerId, data, opts = {}) => {
     <div class="chart-line-wrap">
       <svg class="chart-line-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
         <polygon points="${area}" fill="rgba(201,162,39,0.12)" />
-        <polyline points="${points.join(" ")}" fill="none" stroke="#c9a227" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <polyline points="${points.join(" ")}" fill="none" stroke="#a7192d" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
         ${data
           .map((d, i) => {
             const x = pad + i * stepX;
             const y = h - pad - (d.value / max) * (h - pad * 2);
-            return `<circle cx="${x}" cy="${y}" r="3.5" fill="#c9a227" stroke="#fff" stroke-width="2"/>`;
+            return `<circle cx="${x}" cy="${y}" r="3.5" fill="#a7192d" stroke="#fff" stroke-width="2"/>`;
           })
           .join("")}
       </svg>
@@ -794,7 +832,7 @@ DTV.initRouter = () => {
     if (!a) return;
     if (a.hasAttribute("download")) return;
     if (a.target && a.target !== "_self") return;
-    if (a.dataset.menu === "logout") return;
+    if (a.dataset.menu === "logout" || a.dataset.action === "logout") return;
 
     const href = a.getAttribute("href");
     if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;

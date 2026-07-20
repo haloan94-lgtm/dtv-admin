@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xem trước PDF — Đơn hàng</title>
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  html, body { background: #525659; height: 100%; }
+  body { overflow: hidden; }
+
+  /* ---------- Toolbar (mô phỏng trình xem PDF của trình duyệt) ---------- */
+  .pdf-toolbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 48px; z-index: 100;
+    background: #323639; color: #e8eaed;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 10px; font-size: 13px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.4);
+  }
+  .pdf-toolbar-group { display: flex; align-items: center; gap: 4px; min-width: 0; }
+  .pdf-icon-btn {
+    width: 36px; height: 36px; border: 0; background: transparent; color: #e8eaed;
+    border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex: none;
+  }
+  .pdf-icon-btn:hover { background: rgba(255,255,255,.12); }
+  .pdf-icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .pdf-filename {
+    display: flex; flex-direction: column; margin-left: 4px; min-width: 0;
+  }
+  .pdf-filename b { font-size: 13px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .pdf-filename span { font-size: 11px; color: #9aa0a6; }
+  .pdf-zoom-label { width: 46px; text-align: center; color: #e8eaed; font-size: 13px; }
+  .pdf-page-indicator {
+    background: rgba(255,255,255,.08); border-radius: 4px; padding: 6px 10px; font-size: 12.5px; color: #e8eaed;
+  }
+  .pdf-divider { width: 1px; height: 22px; background: rgba(255,255,255,.18); margin: 0 6px; }
+  .pdf-primary-btn {
+    display: flex; align-items: center; gap: 6px; background: var(--primary); color: #fff;
+    border: 0; border-radius: 4px; padding: 0 14px; height: 34px; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  .pdf-primary-btn:hover { background: var(--primary-hover); }
+  .pdf-primary-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- Viewer body ---------- */
+  .pdf-viewer {
+    position: fixed; top: 48px; left: 0; right: 0; bottom: 0;
+    overflow: auto; background: #525659;
+    padding: 32px 0 80px;
+    display: flex; justify-content: center;
+  }
+  .pdf-page {
+    width: 794px; min-height: 1123px; background: #fff; flex: none;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.35);
+    padding: 52px 56px 44px;
+    transform-origin: top center;
+    transition: transform .15s ease;
+    color: var(--text);
+  }
+
+  /* ---------- Invoice content ---------- */
+  .inv-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  .inv-brand { display: flex; gap: 14px; align-items: flex-start; }
+  .inv-logo { width: 58px; height: 58px; border-radius: 10px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px var(--border); }
+  .inv-company-name { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: .01em; }
+  .inv-company-meta { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.6; }
+  .inv-doc-title { text-align: right; flex: none; }
+  .inv-doc-name { font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: .04em; }
+  .inv-doc-id { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .inv-doc-date { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+  .inv-doc-tag { margin-top: 8px; }
+
+  .inv-divider {
+    height: 3px; margin: 18px 0 20px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--primary) 0%, #c9a227 100%);
+  }
+
+  .inv-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .inv-party {
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: #fafafa;
+  }
+  .inv-party-label { font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: .06em; margin-bottom: 8px; }
+  .inv-party-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .inv-party-line { font-size: 12.5px; color: var(--text-secondary); margin-top: 4px; line-height: 1.6; }
+
+  .inv-meta-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px;
+  }
+  .inv-meta-item { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; }
+  .inv-meta-item-label { font-size: 10.5px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .04em; }
+  .inv-meta-item-value { font-size: 13px; color: var(--text); margin-top: 3px; font-weight: 500; }
+
+  .inv-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 4px; }
+  .inv-table thead th {
+    background: var(--primary); color: #fff; font-weight: 600; text-align: left;
+    padding: 9px 10px; font-size: 11.5px; letter-spacing: .02em; text-transform: uppercase;
+  }
+  .inv-table thead th.num { text-align: right; }
+  .inv-table tbody td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .inv-table tbody td.num { text-align: right; white-space: nowrap; }
+  .inv-table tbody tr:last-child td { border-bottom: 1px solid var(--border-secondary); }
+  .inv-prod-cell { display: flex; gap: 10px; align-items: center; }
+  .inv-prod-thumb { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; flex: none; box-shadow: 0 0 0 1px var(--border); }
+  .inv-prod-name { font-weight: 600; color: var(--text); font-size: 12.5px; }
+  .inv-prod-sku { color: var(--text-tertiary); font-size: 11px; margin-top: 2px; }
+  .inv-prod-engrave { font-size: 11px; color: var(--primary); margin-top: 3px; }
+  .inv-table tfoot td { padding: 11px 10px; font-weight: 700; background: #fafafa; border-bottom: 1px solid var(--border-secondary); }
+
+  .inv-bottom { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; margin-top: 20px; }
+  .inv-notes { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.7; }
+  .inv-notes b { color: var(--text-secondary); }
+  .inv-words { margin-top: 12px; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed var(--border-secondary); padding-top: 10px; }
+  .inv-words b { color: var(--text); }
+
+  .inv-totals { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .inv-totals-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 5px 0; color: var(--text-secondary); }
+  .inv-totals-row.grand { font-size: 15px; font-weight: 800; color: var(--text); border-top: 1px solid var(--border-secondary); margin-top: 4px; padding-top: 10px; }
+  .inv-totals-row.debt { color: var(--primary); font-weight: 700; }
+  .inv-progress { height: 6px; background: var(--border); border-radius: 4px; margin-top: 10px; overflow: hidden; }
+  .inv-progress-bar { height: 100%; background: var(--primary); }
+  .inv-progress-label { font-size: 10.5px; color: var(--text-tertiary); margin-top: 4px; text-align: right; }
+
+  .inv-signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 34px; text-align: center; }
+  .inv-sign-role { font-size: 12.5px; font-weight: 700; color: var(--text); }
+  .inv-sign-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; font-style: italic; }
+  .inv-sign-space { height: 56px; }
+  .inv-sign-date { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
+
+  .inv-footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; }
+  .inv-footer-msg { font-size: 12px; color: var(--text-secondary); font-style: italic; }
+  .inv-barcode { text-align: right; }
+  .inv-barcode-bars { height: 30px; width: 150px; margin-left: auto;
+    background: repeating-linear-gradient(90deg, #1a1a1a 0 2px, transparent 2px 4px, #1a1a1a 4px 5px, transparent 5px 9px, #1a1a1a 9px 12px, transparent 12px 14px);
+  }
+  .inv-barcode-text { font-size: 10.5px; letter-spacing: .12em; color: var(--text-tertiary); margin-top: 4px; font-family: monospace; }
+
+  /* ---------- Print ---------- */
+  @media print {
+    .pdf-toolbar { display: none !important; }
+    html, body { background: #fff !important; overflow: visible !important; }
+    .pdf-viewer { position: static; overflow: visible; padding: 0; background: #fff; display: block; }
+    .pdf-page { box-shadow: none; width: auto; min-height: 0; margin: 0; padding: 0; transform: none !important; }
+    @page { size: A4; margin: 14mm; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="pdf-toolbar">
+    <div class="pdf-toolbar-group">
+      <button class="pdf-icon-btn" id="btnBack" title="Quay lại">
+        <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <div class="pdf-filename">
+        <b id="pdfFileName">don-hang.pdf</b>
+        <span id="pdfFileSize">Đang tải…</span>
+      </div>
+    </div>
+
+    <div class="pdf-toolbar-group">
+      <span class="pdf-page-indicator">Trang 1 / 1</span>
+      <div class="pdf-divider"></div>
+      <button class="pdf-icon-btn" id="btnZoomOut" title="Thu nhỏ">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      </button>
+      <span class="pdf-zoom-label" id="zoomLabel">100%</span>
+      <button class="pdf-icon-btn" id="btnZoomIn" title="Phóng to">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      </button>
+    </div>
+
+    <div class="pdf-toolbar-group">
+      <button class="pdf-primary-btn" id="btnPrint" title="In tài liệu">
+        <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        In / Lưu PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="pdf-viewer">
+    <div class="pdf-page" id="pdfPage">
+      <!-- Header -->
+      <div class="inv-header">
+        <div class="inv-brand">
+          <img class="inv-logo" src="https://dothivang.net/wp-content/uploads/2022/09/logo-DTV-1000x1000.png" alt="Đô Thị Vàng">
+          <div>
+            <div class="inv-company-name">CÔNG TY TNHH TRANG SỨC ĐÔ THỊ VÀNG</div>
+            <div class="inv-company-meta">
+              123 Phố Vàng, Hoàn Kiếm, Hà Nội &nbsp;·&nbsp; MST: 0123456789<br>
+              Hotline: 1900 9999 &nbsp;·&nbsp; contact@dothivang.vn
+            </div>
+          </div>
+        </div>
+        <div class="inv-doc-title">
+          <div class="inv-doc-name">ĐƠN HÀNG</div>
+          <div class="inv-doc-id" id="docOrderId"></div>
+          <div class="inv-doc-date" id="docOrderDate"></div>
+        </div>
+      </div>
+
+      <div class="inv-divider"></div>
+
+      <!-- Parties -->
+      <div class="inv-parties">
+        <div class="inv-party">
+          <div class="inv-party-label">BÊN BÁN</div>
+          <div class="inv-party-name">Công ty TNHH Trang sức Đô Thị Vàng</div>
+          <div class="inv-party-line">123 Phố Vàng, Hoàn Kiếm, Hà Nội</div>
+          <div class="inv-party-line">Hotline: 1900 9999 · MST: 0123456789</div>
+        </div>
+        <div class="inv-party" id="buyerParty"></div>
+      </div>
+
+      <!-- Meta strip -->
+      <div class="inv-meta-strip" id="metaStrip"></div>
+
+      <!-- Items table -->
+      <table class="inv-table">
+        <thead>
+          <tr>
+            <th style="width:28px">#</th>
+            <th>Sản phẩm</th>
+            <th class="num" style="width:44px">SL</th>
+            <th class="num" style="width:70px">TL (chỉ)</th>
+            <th class="num" style="width:100px">Đơn giá</th>
+            <th class="num" style="width:110px">Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody id="itemRows"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5" style="text-align:right">Tổng cộng</td>
+            <td class="num" id="footTotal"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- Bottom: notes + totals -->
+      <div class="inv-bottom">
+        <div class="inv-notes">
+          <div><b>Ghi chú:</b> Sản phẩm được gia công theo tiêu chuẩn Đô Thị Vàng, vui lòng kiểm tra kỹ số lượng, trọng lượng và nội dung khắc (nếu có) khi nhận hàng. Mọi khiếu nại vui lòng phản hồi trong vòng 48 giờ kể từ khi nhận hàng.</div>
+          <div class="inv-words" id="amountWords"></div>
+        </div>
+        <div class="inv-totals">
+          <div class="inv-totals-row grand"><span>Tổng cộng</span><span id="sumTotal"></span></div>
+          <div class="inv-totals-row"><span>Đã thanh toán</span><span id="sumPaid"></span></div>
+          <div class="inv-totals-row debt"><span>Còn phải thu</span><span id="sumDebt"></span></div>
+          <div class="inv-progress"><div class="inv-progress-bar" id="sumProgressBar"></div></div>
+          <div class="inv-progress-label" id="sumProgressLabel"></div>
+        </div>
+      </div>
+
+      <!-- Signatures -->
+      <div class="inv-signatures">
+        <div>
+          <div class="inv-sign-date" id="signDate1">&nbsp;</div>
+          <div class="inv-sign-role">Người lập phiếu</div>
+          <div class="inv-sign-hint">(Ký, ghi rõ họ tên)</div>
+          <div class="inv-sign-space"></div>
+        </div>
+        <div>
+          <div class="inv-sign-date">&nbsp;</div>
+          <div class="inv-sign-role">Thủ kho</div>
+          <div class="inv-sign-hint">(Ký, ghi rõ họ tên)</div>
+          <div class="inv-sign-space"></div>
+        </div>
+        <div>
+          <div class="inv-sign-date">&nbsp;</div>
+          <div class="inv-sign-role">Đại diện bên mua</div>
+          <div class="inv-sign-hint">(Ký, ghi rõ họ tên)</div>
+          <div class="inv-sign-space"></div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="inv-footer">
+        <div class="inv-footer-msg">Cảm ơn quý đại lý đã tin tưởng và đồng hành cùng Đô Thị Vàng! ✦</div>
+        <div class="inv-barcode">
+          <div class="inv-barcode-bars"></div>
+          <div class="inv-barcode-text" id="barcodeText"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/mock-data.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    if (!DTV.requireAuth()) { /* redirected */ }
+
+    const PRODUCT_IMAGES = [
+      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=700&q=80",
+    ];
+    function pickProductImage(name, idx) {
+      const s = (name || "").toLowerCase();
+      if (s.includes("nhẫn")) return PRODUCT_IMAGES[0];
+      if (s.includes("dây chuyền") || s.includes("vòng cổ") || s.includes("charm")) return PRODUCT_IMAGES[1];
+      if (s.includes("lắc tay") || s.includes("bông tai") || s.includes("trang sức")) return PRODUCT_IMAGES[2];
+      return PRODUCT_IMAGES[idx % PRODUCT_IMAGES.length];
+    }
+
+    // Số tiền bằng chữ (tiếng Việt)
+    function amountToVietnameseWords(number) {
+      const digits = ["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín"];
+      const groupUnits = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ"];
+      function readGroup(n, isLeading) {
+        const tram = Math.floor(n / 100), chuc = Math.floor((n % 100) / 10), donvi = n % 10;
+        const parts = [];
+        if (tram > 0) parts.push(digits[tram] + " trăm");
+        else if (!isLeading) parts.push("không trăm");
+        if (chuc > 1) {
+          parts.push(digits[chuc] + " mươi" + (donvi === 1 ? " mốt" : donvi === 5 ? " lăm" : donvi > 0 ? " " + digits[donvi] : ""));
+        } else if (chuc === 1) {
+          parts.push("mười" + (donvi === 5 ? " lăm" : donvi > 0 ? " " + digits[donvi] : ""));
+        } else if (donvi > 0) {
+          parts.push((tram > 0 || !isLeading ? "lẻ " : "") + digits[donvi]);
+        }
+        return parts.join(" ");
+      }
+      let n = Math.round(number || 0);
+      if (n === 0) return "Không đồng";
+      const groups = [];
+      while (n > 0) { groups.push(n % 1000); n = Math.floor(n / 1000); }
+      let words = [];
+      for (let i = groups.length - 1; i >= 0; i--) {
+        if (groups[i] === 0) continue;
+        const text = readGroup(groups[i], i === groups.length - 1);
+        words.push(text + (groupUnits[i] ? " " + groupUnits[i] : ""));
+      }
+      let result = words.join(" ").replace(/\s+/g, " ").trim();
+      result = result.charAt(0).toUpperCase() + result.slice(1);
+      return result + " đồng";
+    }
+
+    const params = new URLSearchParams(location.search);
+    const order = DTV.orders.find(o => o.id === params.get("id")) || DTV.orders[0];
+    const customer = DTV.customers.find(c => c.id === order.customerId);
+    const items = DTV.orderItems[order.id] || DTV.products.slice(0, order.items > 3 ? 3 : order.items).map((p, i) => ({
+      productId: p.id, name: p.name, sku: p.sku, qty: Math.ceil(order.items / 3) || 1,
+      weight: p.weight, unitPrice: p.price, total: p.price * (Math.ceil(order.items / 3) || 1)
+    }));
+    const salesRep = DTV.users.find(u => u.role === "Kinh doanh" && u.status === "active");
+
+    document.title = `Đơn hàng ${order.id}.pdf — Xem trước in`;
+    document.getElementById("pdfFileName").textContent = `Don-hang-${order.id}.pdf`;
+    document.getElementById("pdfFileSize").textContent = "Tài liệu 1 trang · Bản mô phỏng";
+
+    document.getElementById("docOrderId").textContent = "#" + order.id;
+    document.getElementById("docOrderDate").textContent = "Ngày lập: " + DTV.formatDateTime(order.createdAt);
+
+    document.getElementById("buyerParty").innerHTML = customer ? `
+      <div class="inv-party-label">BÊN MUA (ĐẠI LÝ)</div>
+      <div class="inv-party-name">${customer.name}</div>
+      <div class="inv-party-line">Người liên hệ: ${customer.contact} · ${customer.phone}</div>
+      <div class="inv-party-line">${customer.address}, ${customer.district}, ${customer.city}</div>
+      <div class="inv-party-line">Hạng đại lý: ${DTV.tag(customer.tier)}</div>
+    ` : `
+      <div class="inv-party-label">BÊN MUA (ĐẠI LÝ)</div>
+      <div class="inv-party-name">${order.customer}</div>`;
+
+    const completedAt = new Date(new Date(order.createdAt).getTime() + 4 * 86400000);
+    document.getElementById("metaStrip").innerHTML = [
+      { label: "Ngày đặt hàng", value: DTV.formatDate(order.createdAt) },
+      { label: "Ngày hoàn thành", value: DTV.formatDate(completedAt) },
+      { label: "Thanh toán", value: DTV.tag(order.payment) },
+      { label: "NV phụ trách", value: salesRep ? salesRep.name : "Phòng kinh doanh" },
+    ].map(m => `<div class="inv-meta-item"><div class="inv-meta-item-label">${m.label}</div><div class="inv-meta-item-value">${m.value}</div></div>`).join("");
+
+    document.getElementById("itemRows").innerHTML = items.map((it, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>
+          <div class="inv-prod-cell">
+            <img class="inv-prod-thumb" src="${pickProductImage(it.name, i)}" alt="${it.name}">
+            <div>
+              <div class="inv-prod-name">${it.name}</div>
+              <div class="inv-prod-sku">SKU: ${it.sku}</div>
+              ${it.engravingText ? `<div class="inv-prod-engrave">Khắc tên: “${it.engravingText}”${it.engravingFee ? " · +" + DTV.formatMoney(it.engravingFee) : ""}</div>` : ""}
+            </div>
+          </div>
+        </td>
+        <td class="num">${it.qty}</td>
+        <td class="num">${it.weight}</td>
+        <td class="num">${DTV.formatMoney(it.unitPrice)}</td>
+        <td class="num">${DTV.formatMoney(it.total)}</td>
+      </tr>`).join("");
+
+    document.getElementById("footTotal").textContent = DTV.formatMoney(order.total);
+    document.getElementById("amountWords").innerHTML = `<b>Số tiền bằng chữ:</b> ${amountToVietnameseWords(order.total)}.`;
+
+    document.getElementById("sumTotal").textContent = DTV.formatMoney(order.total);
+    document.getElementById("sumPaid").textContent = DTV.formatMoney(order.paid);
+    document.getElementById("sumDebt").textContent = DTV.formatMoney(order.debt);
+    const paidPct = Math.max(0, Math.min(100, Math.round((order.paid / order.total) * 100) || 0));
+    document.getElementById("sumProgressBar").style.width = paidPct + "%";
+    document.getElementById("sumProgressLabel").textContent = paidPct + "% đã thanh toán";
+
+    document.getElementById("barcodeText").textContent = "*" + order.id + "*";
+
+    // Back to order detail
+    document.getElementById("btnBack").addEventListener("click", () => {
+      location.href = "order-detail.html?id=" + encodeURIComponent(order.id);
+    });
+
+    // Print
+    document.getElementById("btnPrint").addEventListener("click", () => window.print());
+
+    // Zoom
+    let zoom = 100;
+    const pdfPage = document.getElementById("pdfPage");
+    const zoomLabel = document.getElementById("zoomLabel");
+    function applyZoom() {
+      pdfPage.style.transform = `scale(${zoom / 100})`;
+      zoomLabel.textContent = zoom + "%";
+    }
+    document.getElementById("btnZoomIn").addEventListener("click", () => { zoom = Math.min(200, zoom + 10); applyZoom(); });
+    document.getElementById("btnZoomOut").addEventListener("click", () => { zoom = Math.max(50, zoom - 10); applyZoom(); });
+  </script>
+</body>
+</html>
